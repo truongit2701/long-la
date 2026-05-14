@@ -7,6 +7,7 @@ import {
   playersCollection,
   serializeBadmintonSession,
 } from "@/lib/badminton";
+import { uploadQrToCloudinary } from "@/lib/cloudinary";
 
 const createBadmintonSessionSchema = z.object({
   playedAt: z.string().min(1, "Chọn ngày chơi"),
@@ -92,6 +93,20 @@ export async function POST(request: Request) {
 
   const now = new Date();
   const sessions = await badmintonSessionsCollection();
+  let qrImageData = parsed.data.qrImageData;
+
+  try {
+    qrImageData = await uploadQrToCloudinary(parsed.data.qrImageData);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : "Không upload được QR lên Cloudinary",
+      },
+      { status: 500 },
+    );
+  }
+
   const playerNames = Object.fromEntries(
     existingPlayers.map((player) => [player._id.toString(), player.name]),
   );
@@ -123,7 +138,7 @@ export async function POST(request: Request) {
       playerId: participant.playerId,
       paid: false,
     })),
-    qrImageData: parsed.data.qrImageData,
+    qrImageData,
     note: parsed.data.note.trim(),
     createdAt: now,
     updatedAt: now,
