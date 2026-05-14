@@ -9,13 +9,20 @@ services:
     expose:
       - "80" 
 
-  nginx:
-    image: nginx:alpine
-    container_name: nginx_proxy
+  caddy:
+    image: caddy:alpine
+    container_name: caddy_proxy
+    restart: always
     ports:
       - "80:80"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - "443:443"
+    command: caddy reverse-proxy --from long-la.duckdns.org --to web:80
     depends_on:
       - web
-dock
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
