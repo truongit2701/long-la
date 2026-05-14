@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth";
 import { badmintonSessionsCollection } from "@/lib/badminton";
 
 const updatePaymentSchema = z.object({
-  playerId: z.string().min(1),
+  participantId: z.string().min(1),
   paid: z.boolean(),
 });
 
@@ -45,29 +45,49 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ message: "Không tìm thấy buổi chơi" }, { status: 404 });
   }
 
-  if (!existingSession.playerIds.includes(parsed.data.playerId)) {
-    return NextResponse.json({ message: "Người chơi không thuộc buổi này" }, { status: 400 });
+  const participants =
+    existingSession.participants ??
+    existingSession.playerIds.map((playerId) => ({
+      participantId: playerId,
+      playerId,
+      displayName: "",
+    }));
+  const participant = participants.find(
+    (item) => item.participantId === parsed.data.participantId,
+  );
+
+  if (!participant) {
+    return NextResponse.json({ message: "vận động viên không thuộc buổi này" }, { status: 400 });
   }
 
   const currentPayments = existingSession.payments ?? [];
   const paymentExists = currentPayments.some(
-    (payment) => payment.playerId === parsed.data.playerId,
+    (payment) =>
+      (payment.participantId ?? payment.playerId) === parsed.data.participantId,
   );
   const paidAt = parsed.data.paid ? new Date() : undefined;
 
   if (paymentExists) {
     await sessions.updateOne(
-      {
-        _id: existingSession._id,
-        ownerId: session.sub,
-        "payments.playerId": parsed.data.playerId,
-      },
+      { _id: existingSession._id, ownerId: session.sub },
       {
         $set: {
-          "payments.$.paid": parsed.data.paid,
-          "payments.$.paidAt": paidAt,
+          "payments.$[payment].paid": parsed.data.paid,
+          "payments.$[payment].paidAt": paidAt,
+          "payments.$[payment].participantId": parsed.data.participantId,
+          "payments.$[payment].playerId": participant.playerId,
           updatedAt: new Date(),
         },
+      },
+      {
+        arrayFilters: [
+          {
+            $or: [
+              { "payment.participantId": parsed.data.participantId },
+              { "payment.playerId": parsed.data.participantId },
+            ],
+          },
+        ],
       },
     );
   } else {
@@ -76,7 +96,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       {
         $push: {
           payments: {
-            playerId: parsed.data.playerId,
+            participantId: parsed.data.participantId,
+            playerId: participant.playerId,
             paid: parsed.data.paid,
             paidAt,
           },
@@ -88,7 +109,8 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   return NextResponse.json({
     payment: {
-      playerId: parsed.data.playerId,
+      participantId: parsed.data.participantId,
+      playerId: participant.playerId,
       paid: parsed.data.paid,
       paidAt: paidAt?.toISOString() ?? "",
     },

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Long La Auth",
-  description: "Next.js, MongoDB, shadcn/ui, JWT cookie auth starter",
+  title: "Long La",
+  description: "a project for fun",
 };
 
 export default function RootLayout({

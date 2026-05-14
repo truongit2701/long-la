@@ -8,7 +8,7 @@ import {
   serializeBadmintonSession,
 } from "@/lib/badminton";
 
-const createBadmintonSessionSchema = z.object({
+const updateBadmintonSessionSchema = z.object({
   playedAt: z.string().min(1, "Chọn ngày chơi"),
   courtName: z.string().max(120).optional().default(""),
   courtHourlyPrice: z.coerce.number().min(0, "Giá sân không hợp lệ"),
@@ -31,39 +31,27 @@ const createBadmintonSessionSchema = z.object({
   note: z.string().max(500).optional().default(""),
 });
 
-export async function GET() {
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export async function PATCH(request: Request, context: RouteContext) {
   const session = await getSession();
 
   if (!session) {
     return NextResponse.json({ message: "Chưa đăng nhập" }, { status: 401 });
   }
 
-  const [sessions, players] = await Promise.all([
-    badmintonSessionsCollection(),
-    playersCollection(),
-  ]);
-  const [items, playerItems] = await Promise.all([
-    sessions.find({ ownerId: session.sub }).sort({ playedAt: -1, createdAt: -1 }).toArray(),
-    players.find({ ownerId: session.sub }).toArray(),
-  ]);
-  const playerNames = Object.fromEntries(
-    playerItems.map((player) => [player._id.toString(), player.name]),
-  );
+  const { id } = await context.params;
 
-  return NextResponse.json({
-    sessions: items.map((item) => serializeBadmintonSession(item, playerNames)),
-  });
-}
-
-export async function POST(request: Request) {
-  const session = await getSession();
-
-  if (!session) {
-    return NextResponse.json({ message: "Chưa đăng nhập" }, { status: 401 });
+  if (!ObjectId.isValid(id)) {
+    return NextResponse.json({ message: "Buổi chơi không hợp lệ" }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = createBadmintonSessionSchema.safeParse(body);
+  const parsed = updateBadmintonSessionSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -72,10 +60,20 @@ export async function POST(request: Request) {
     );
   }
 
+  const sessions = await badmintonSessionsCollection();
+  const existingSession = await sessions.findOne({
+    _id: new ObjectId(id),
+    ownerId: session.sub,
+  });
+
+  if (!existingSession) {
+    return NextResponse.json({ message: "Không tìm thấy buổi chơi" }, { status: 404 });
+  }
+
   const selectedPlayerIds = parsed.data.participants.map((participant) => participant.playerId);
   const validPlayerObjectIds = selectedPlayerIds
-    .filter((id) => ObjectId.isValid(id))
-    .map((id) => new ObjectId(id));
+    .filter((playerId) => ObjectId.isValid(playerId))
+    .map((playerId) => new ObjectId(playerId));
 
   if (validPlayerObjectIds.length !== selectedPlayerIds.length) {
     return NextResponse.json({ message: "Danh sách vận động viên không hợp lệ" }, { status: 400 });
@@ -90,25 +88,59 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Có vận động viên không tồn tại" }, { status: 400 });
   }
 
-  const now = new Date();
-  const sessions = await badmintonSessionsCollection();
   const playerNames = Object.fromEntries(
     existingPlayers.map((player) => [player._id.toString(), player.name]),
   );
+  const previousParticipants =
+    existingSession.participants ??
+    existingSession.playerIds.map((playerId) => ({
+      participantId: playerId,
+      playerId,
+      displayName: playerNames[playerId] ?? "vận động viên",
+    }));
+  const previousPaymentsByParticipant = Object.fromEntries(
+    (existingSession.payments ?? []).map((payment) => [
+      payment.participantId ?? payment.playerId ?? "",
+      payment,
+    ]),
+  );
+  const previousParticipantsByPlayer = previousParticipants.reduce<
+    Record<string, typeof previousParticipants>
+  >((groups, participant) => {
+    groups[participant.playerId] = groups[participant.playerId] ?? [];
+    groups[participant.playerId].push(participant);
+    return groups;
+  }, {});
+
   const participants = parsed.data.participants.flatMap((participant) => {
     const playerName = playerNames[participant.playerId] ?? "vận động viên";
+    const previousForPlayer = previousParticipantsByPlayer[participant.playerId] ?? [];
 
-    return Array.from({ length: participant.quantity }, (_, index) => ({
-      participantId: `${participant.playerId}:${index + 1}:${crypto.randomUUID()}`,
-      playerId: participant.playerId,
-      displayName:
-        participant.quantity > 1 ? `${playerName} ${index + 1}` : playerName,
-    }));
+    return Array.from({ length: participant.quantity }, (_, index) => {
+      const previous = previousForPlayer[index];
+
+      return {
+        participantId:
+          previous?.participantId ?? `${participant.playerId}:${index + 1}:${crypto.randomUUID()}`,
+        playerId: participant.playerId,
+        displayName:
+          participant.quantity > 1 ? `${playerName} ${index + 1}` : playerName,
+      };
+    });
   });
-  const playerIds = participants.map((participant) => participant.playerId);
+  const payments = participants.map((participant) => {
+    const previousPayment = previousPaymentsByParticipant[participant.participantId];
+
+    return {
+      participantId: participant.participantId,
+      playerId: participant.playerId,
+      paid: previousPayment?.paid ?? false,
+      paidAt: previousPayment?.paidAt,
+    };
+  });
   const courtPrice = parsed.data.courtHourlyPrice * parsed.data.courtHours;
+  const now = new Date();
   const document = {
-    ownerId: session.sub,
     playedAt: parsed.data.playedAt,
     courtName: parsed.data.courtName.trim(),
     courtHourlyPrice: parsed.data.courtHourlyPrice,
@@ -116,30 +148,25 @@ export async function POST(request: Request) {
     courtPrice,
     shuttlecockCount: parsed.data.shuttlecockCount,
     shuttlecockPrice: parsed.data.shuttlecockPrice,
-    playerIds,
+    playerIds: participants.map((participant) => participant.playerId),
     participants,
-    payments: participants.map((participant) => ({
-      participantId: participant.participantId,
-      playerId: participant.playerId,
-      paid: false,
-    })),
+    payments,
     qrImageData: parsed.data.qrImageData,
     note: parsed.data.note.trim(),
-    createdAt: now,
     updatedAt: now,
   };
-  const result = await sessions.insertOne(document);
 
-  return NextResponse.json(
-    {
-      session: serializeBadmintonSession(
-        {
-          _id: result.insertedId,
-          ...document,
-        },
-        playerNames,
-      ),
-    },
-    { status: 201 },
+  const result = await sessions.findOneAndUpdate(
+    { _id: existingSession._id, ownerId: session.sub },
+    { $set: document },
+    { returnDocument: "after" },
   );
+
+  if (!result) {
+    return NextResponse.json({ message: "Không tìm thấy buổi chơi" }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    session: serializeBadmintonSession(result, playerNames),
+  });
 }

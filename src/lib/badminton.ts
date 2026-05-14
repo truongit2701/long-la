@@ -14,12 +14,20 @@ export type BadmintonSessionDocument = {
   ownerId: string;
   playedAt: string;
   courtName?: string;
-  courtPrice: number;
+  courtPrice?: number;
+  courtHourlyPrice?: number;
+  courtHours?: number;
   shuttlecockCount: number;
   shuttlecockPrice: number;
   playerIds: string[];
-  payments?: Array<{
+  participants?: Array<{
+    participantId: string;
     playerId: string;
+    displayName: string;
+  }>;
+  payments?: Array<{
+    playerId?: string;
+    participantId?: string;
     paid: boolean;
     paidAt?: Date;
   }>;
@@ -57,31 +65,49 @@ export function serializeBadmintonSession(
   session: WithId<BadmintonSessionDocument>,
   playerNames: Record<string, string>,
 ) {
+  const courtHourlyPrice = session.courtHourlyPrice ?? session.courtPrice ?? 0;
+  const courtHours = session.courtHours ?? 1;
+  const courtPrice = session.courtPrice ?? courtHourlyPrice * courtHours;
   const shuttlecockTotal = session.shuttlecockCount * session.shuttlecockPrice;
-  const totalCost = session.courtPrice + shuttlecockTotal;
-  const playerCount = session.playerIds.length;
-  const paymentsByPlayerId = Object.fromEntries(
-    (session.payments ?? []).map((payment) => [payment.playerId, payment]),
+  const totalCost = courtPrice + shuttlecockTotal;
+  const participants =
+    session.participants ??
+    session.playerIds.map((id) => ({
+      participantId: id,
+      playerId: id,
+      displayName: playerNames[id] ?? "vận động viên đã xóa",
+    }));
+  const playerCount = participants.length;
+  const paymentsByParticipantId = Object.fromEntries(
+    (session.payments ?? []).map((payment) => [
+      payment.participantId ?? payment.playerId ?? "",
+      payment,
+    ]),
   );
 
   return {
     id: session._id.toString(),
     playedAt: session.playedAt,
     courtName: session.courtName ?? "",
-    courtPrice: session.courtPrice,
+    courtHourlyPrice,
+    courtHours,
+    courtPrice,
     shuttlecockCount: session.shuttlecockCount,
     shuttlecockPrice: session.shuttlecockPrice,
     shuttlecockTotal,
     totalCost,
     playerCount,
     costPerPlayer: playerCount > 0 ? Math.ceil(totalCost / playerCount) : 0,
-    players: session.playerIds.map((id) => ({
-      id,
-      name: playerNames[id] ?? "Người chơi đã xóa",
-      paid: paymentsByPlayerId[id]?.paid ?? false,
-      paidAt: paymentsByPlayerId[id]?.paidAt?.toISOString() ?? "",
+    players: participants.map((participant) => ({
+      id: participant.participantId,
+      playerId: participant.playerId,
+      name: participant.displayName,
+      paid: paymentsByParticipantId[participant.participantId]?.paid ?? false,
+      paidAt: paymentsByParticipantId[participant.participantId]?.paidAt?.toISOString() ?? "",
     })),
-    paidCount: session.playerIds.filter((id) => paymentsByPlayerId[id]?.paid).length,
+    paidCount: participants.filter(
+      (participant) => paymentsByParticipantId[participant.participantId]?.paid,
+    ).length,
     qrImageData: session.qrImageData ?? "",
     note: session.note ?? "",
     createdAt: session.createdAt.toISOString(),

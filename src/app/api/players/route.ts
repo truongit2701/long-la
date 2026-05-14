@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth";
 import { playersCollection, serializePlayer } from "@/lib/badminton";
 
 const createPlayerSchema = z.object({
-  name: z.string().min(2, "Tên người chơi cần ít nhất 2 ký tự").max(80),
+  name: z.string().min(2, "Tên vận động viên cần ít nhất 2 ký tự").max(80),
   phone: z.string().max(30).optional().default(""),
   note: z.string().max(300).optional().default(""),
 });

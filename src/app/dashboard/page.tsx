@@ -18,7 +18,7 @@ export default async function DashboardPage() {
           <div>
             <p className="sport-kicker">
               <Activity className="size-4" />
-              Quản lý team cầu lông
+              Quản lý cầu lông
             </p>
             <h1 className="sport-title">
               Xin chào, {session.username}

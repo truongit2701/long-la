@@ -2,7 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { CalendarDays, CalendarPlus, CircleDollarSign, Plus, QrCode, Users, WalletCards } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarPlus,
+  CircleDollarSign,
+  Pencil,
+  Plus,
+  QrCode,
+  Save,
+  Trash2,
+  Users,
+  WalletCards,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -52,7 +64,8 @@ function readFileAsDataUrl(file: File) {
 export function BadmintonManager() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<BadmintonSession[]>([]);
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [participantQuantities, setParticipantQuantities] = useState<Record<string, number>>({});
+  const [editingPlayerId, setEditingPlayerId] = useState("");
   const [qrImageData, setQrImageData] = useState("");
   const [playerError, setPlayerError] = useState("");
   const [sessionError, setSessionError] = useState("");
@@ -77,7 +90,10 @@ export function BadmintonManager() {
     loadData();
   }, []);
 
-  const selectedPlayerCount = selectedPlayerIds.length;
+  const selectedPlayerCount = Object.values(participantQuantities).reduce(
+    (sum, quantity) => sum + quantity,
+    0,
+  );
   const totalSpent = useMemo(
     () => sessions.reduce((sum, session) => sum + session.totalCost, 0),
     [sessions],
@@ -109,12 +125,60 @@ export function BadmintonManager() {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      setPlayerError(data?.message ?? "Không tạo được người chơi");
+      setPlayerError(data?.message ?? "Không tạo được vận động viên");
       return;
     }
 
     setPlayers((current) => [data.player, ...current]);
     form.reset();
+  }
+
+  async function updatePlayer(event: FormEvent<HTMLFormElement>, playerId: string) {
+    event.preventDefault();
+    setPlayerError("");
+    const formData = new FormData(event.currentTarget);
+    const response = await fetch(`/api/players/${playerId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: String(formData.get("name") ?? ""),
+        phone: String(formData.get("phone") ?? ""),
+        note: String(formData.get("note") ?? ""),
+      }),
+    });
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setPlayerError(data?.message ?? "Không sửa được vận động viên");
+      return;
+    }
+
+    setPlayers((current) =>
+      current.map((player) => (player.id === playerId ? data.player : player)),
+    );
+    setEditingPlayerId("");
+  }
+
+  async function deletePlayer(playerId: string) {
+    if (!window.confirm("Xóa vận động viên này khỏi danh sách? Lịch sử buổi đánh cũ vẫn được giữ.")) {
+      return;
+    }
+
+    setPlayerError("");
+    const response = await fetch(`/api/players/${playerId}`, { method: "DELETE" });
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      setPlayerError(data?.message ?? "Không xóa được vận động viên");
+      return;
+    }
+
+    setPlayers((current) => current.filter((player) => player.id !== playerId));
+    setParticipantQuantities((current) => {
+      const next = { ...current };
+      delete next[playerId];
+      return next;
+    });
   }
 
   async function createBadmintonSession(event: FormEvent<HTMLFormElement>) {
@@ -128,10 +192,14 @@ export function BadmintonManager() {
       body: JSON.stringify({
         playedAt: String(formData.get("playedAt") ?? ""),
         courtName: String(formData.get("courtName") ?? ""),
-        courtPrice: Number(formData.get("courtPrice") ?? 0),
+        courtHourlyPrice: Number(formData.get("courtHourlyPrice") ?? 0),
+        courtHours: Number(formData.get("courtHours") ?? 0),
         shuttlecockCount: Number(formData.get("shuttlecockCount") ?? 0),
         shuttlecockPrice: Number(formData.get("shuttlecockPrice") ?? 0),
-        playerIds: selectedPlayerIds,
+        participants: Object.entries(participantQuantities).map(([playerId, quantity]) => ({
+          playerId,
+          quantity,
+        })),
         qrImageData,
         note: String(formData.get("note") ?? ""),
       }),
@@ -144,7 +212,7 @@ export function BadmintonManager() {
     }
 
     setSessions((current) => [data.session, ...current]);
-    setSelectedPlayerIds([]);
+    setParticipantQuantities({});
     setQrImageData("");
     form.reset();
   }
@@ -171,11 +239,22 @@ export function BadmintonManager() {
   }
 
   function togglePlayer(playerId: string) {
-    setSelectedPlayerIds((current) =>
-      current.includes(playerId)
-        ? current.filter((id) => id !== playerId)
-        : [...current, playerId],
-    );
+    setParticipantQuantities((current) => {
+      if (current[playerId]) {
+        const next = { ...current };
+        delete next[playerId];
+        return next;
+      }
+
+      return { ...current, [playerId]: 1 };
+    });
+  }
+
+  function updateParticipantQuantity(playerId: string, quantity: number) {
+    setParticipantQuantities((current) => ({
+      ...current,
+      [playerId]: quantity,
+    }));
   }
 
   return (
@@ -183,7 +262,7 @@ export function BadmintonManager() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="metric-card">
           <CardHeader className="pb-2">
-            <CardDescription>Người chơi</CardDescription>
+            <CardDescription>vận động viên</CardDescription>
             <CardTitle className="flex items-center justify-between">
               {players.length}
               <Users className="size-6 text-primary" />
@@ -223,7 +302,7 @@ export function BadmintonManager() {
         <div>
           <p className="font-semibold">Sổ buổi đánh</p>
           <p className="text-sm text-muted-foreground">
-            Mở trang riêng để xem QR và tick trạng thái chuyển khoản.
+            Mở trang xem QR và tick trạng thái chuyển khoản.
           </p>
         </div>
         <Button asChild variant="outline" className="gap-2">
@@ -240,7 +319,7 @@ export function BadmintonManager() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Users className="size-5" />
-                Thêm người chơi
+                Thêm vận động viên
               </CardTitle>
               <CardDescription>Tạo danh sách để chọn mỗi lần đánh.</CardDescription>
             </CardHeader>
@@ -261,7 +340,7 @@ export function BadmintonManager() {
                 {playerError ? <p className="text-sm text-destructive">{playerError}</p> : null}
                 <Button className="w-full gap-2" type="submit">
                   <Plus className="size-4" />
-                  Thêm người chơi
+                  Thêm vận động viên
                 </Button>
               </form>
             </CardContent>
@@ -269,23 +348,75 @@ export function BadmintonManager() {
 
           <Card className="court-panel">
             <CardHeader>
-              <CardTitle className="text-xl">Danh sách người chơi</CardTitle>
+              <CardTitle className="text-xl">Danh sách vận động viên</CardTitle>
               <CardDescription>
                 {isLoading ? "Đang tải..." : "Chọn ở form tạo buổi đánh."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {players.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Chưa có người chơi nào.</p>
+                <p className="text-sm text-muted-foreground">Chưa có vận động viên nào.</p>
               ) : (
-                players.map((player) => (
-                  <div key={player.id} className="rounded-md border border-primary/15 bg-white/75 p-3">
-                    <p className="font-medium">{player.name}</p>
-                    {player.phone ? (
-                      <p className="text-sm text-muted-foreground">{player.phone}</p>
-                    ) : null}
-                  </div>
-                ))
+                players.map((player) =>
+                  editingPlayerId === player.id ? (
+                    <form
+                      key={player.id}
+                      className="space-y-3 rounded-md border border-primary/15 bg-white/75 p-3"
+                      onSubmit={(event) => updatePlayer(event, player.id)}
+                    >
+                      <Input name="name" defaultValue={player.name} required minLength={2} />
+                      <Input name="phone" defaultValue={player.phone} placeholder="Số điện thoại" />
+                      <Input name="note" defaultValue={player.note} placeholder="Ghi chú" />
+                      <div className="flex gap-2">
+                        <Button className="h-9 gap-2" type="submit">
+                          <Save className="size-4" />
+                          Lưu
+                        </Button>
+                        <Button
+                          className="h-9 gap-2"
+                          type="button"
+                          variant="outline"
+                          onClick={() => setEditingPlayerId("")}
+                        >
+                          <X className="size-4" />
+                          Hủy
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div key={player.id} className="rounded-md border border-primary/15 bg-white/75 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium">{player.name}</p>
+                          {player.phone ? (
+                            <p className="text-sm text-muted-foreground">{player.phone}</p>
+                          ) : null}
+                          {player.note ? (
+                            <p className="text-sm text-muted-foreground">{player.note}</p>
+                          ) : null}
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                            onClick={() => setEditingPlayerId(player.id)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            type="button"
+                            variant="ghost"
+                            onClick={() => deletePlayer(player.id)}
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                )
               )}
             </CardContent>
           </Card>
@@ -298,7 +429,7 @@ export function BadmintonManager() {
               Tạo buổi đánh
             </CardTitle>
             <CardDescription>
-              Chọn người chơi, nhập chi phí và thêm QR nhận tiền.
+              Chọn vận động viên, nhập chi phí và thêm QR nhận tiền.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -313,8 +444,12 @@ export function BadmintonManager() {
                   <Input id="courtName" name="courtName" placeholder="Sân 123" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="courtPrice">Tiền sân</Label>
-                  <Input id="courtPrice" name="courtPrice" type="number" min={0} placeholder="180000" required />
+                  <Label htmlFor="courtHourlyPrice">Giá sân / giờ</Label>
+                  <Input id="courtHourlyPrice" name="courtHourlyPrice" type="number" min={0} placeholder="90000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="courtHours">Số giờ chơi</Label>
+                  <Input id="courtHours" name="courtHours" type="number" min={0.5} step={0.5} placeholder="2" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="shuttlecockCount">Số cầu</Label>
@@ -364,18 +499,35 @@ export function BadmintonManager() {
                       className="flex cursor-pointer items-center gap-3 rounded-md border border-primary/15 bg-white/75 p-3 text-sm transition-colors hover:bg-accent"
                     >
                       <input
-                        checked={selectedPlayerIds.includes(player.id)}
+                        checked={Boolean(participantQuantities[player.id])}
                         className="size-4"
                         type="checkbox"
                         onChange={() => togglePlayer(player.id)}
                       />
-                      <span className="font-medium">{player.name}</span>
+                      <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                        <span className="truncate font-medium">{player.name}</span>
+                        <select
+                          className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                          disabled={!participantQuantities[player.id]}
+                          value={participantQuantities[player.id] ?? 1}
+                          onChange={(event) =>
+                            updateParticipantQuantity(player.id, Number(event.target.value))
+                          }
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {Array.from({ length: 10 }, (_, index) => index + 1).map((quantity) => (
+                            <option key={quantity} value={quantity}>
+                              SL {quantity}
+                            </option>
+                          ))}
+                        </select>
+                      </span>
                     </label>
                   ))}
                 </div>
                 {players.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Thêm người chơi trước rồi tạo buổi đánh.
+                    Thêm vận động viên trước rồi tạo buổi đánh.
                   </p>
                 ) : null}
               </div>

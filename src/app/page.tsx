@@ -24,7 +24,7 @@ export default async function HomePage() {
               Chơi khỏe, chia tiền gọn
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
-              Quản lý lịch đánh, người chơi, chi phí sân cầu và trạng thái
+              Quản lý lịch đánh, vận động viên, chi phí sân cầu và trạng thái
               chuyển khoản trong một không gian năng động cho team cầu lông.
             </p>
           </div>
