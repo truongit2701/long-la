@@ -64,7 +64,6 @@ export async function PATCH(request: Request, context: RouteContext) {
   const sessions = await badmintonSessionsCollection();
   const existingSession = await sessions.findOne({
     _id: new ObjectId(id),
-    ownerId: session.sub,
   });
 
   if (!existingSession) {
@@ -82,7 +81,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   const players = await playersCollection();
   const existingPlayers = await players
-    .find({ ownerId: session.sub, _id: { $in: validPlayerObjectIds } })
+    .find({ _id: { $in: validPlayerObjectIds } })
     .toArray();
 
   if (existingPlayers.length !== selectedPlayerIds.length) {
@@ -172,7 +171,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   };
 
   const result = await sessions.findOneAndUpdate(
-    { _id: existingSession._id, ownerId: session.sub },
+    { _id: existingSession._id },
     { $set: document },
     { returnDocument: "after" },
   );

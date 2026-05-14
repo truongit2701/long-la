@@ -42,7 +42,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const players = await playersCollection();
   const now = new Date();
   const result = await players.findOneAndUpdate(
-    { _id: new ObjectId(id), ownerId: session.sub },
+    { _id: new ObjectId(id) },
     {
       $set: {
         name: parsed.data.name.trim(),

@@ -16,7 +16,7 @@ export default function RootLayout({
       <body>
         {children}
         <div className="fixed bottom-2 right-2 z-50 pointer-events-none text-xs font-medium text-muted-foreground opacity-50">
-          v1.0.1
+          v1.0.2
         </div>
       </body>
     </html>
