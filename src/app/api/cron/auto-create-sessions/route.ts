@@ -103,6 +103,8 @@ export async function GET(request: Request) {
         playerIds: fixedPlayerIds,
         participants,
         payments: [],
+        otherFee: latestSession.otherFee ?? 0,
+        otherFeeNote: latestSession.otherFeeNote ?? "",
         qrImageData: latestSession.qrImageData,
         note: `Auto-created session for ${day}`,
         createdAt: now,
