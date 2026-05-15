@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getSession } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -6,18 +7,24 @@ export const metadata: Metadata = {
   description: "a project for fun",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+
   return (
     <html lang="vi">
       <body>
         {children}
-        <div className="fixed bottom-2 right-2 z-50 pointer-events-none text-xs font-medium text-muted-foreground opacity-50">
-          v1.0.2
-        </div>
+        {session?.role === "admin" && (
+          <div className="fixed bottom-2 right-2 z-50 pointer-events-none text-xs font-medium text-muted-foreground opacity-50">
+            v1.0.1 - init<br />
+            v1.0.2 - codinh feature<br />
+            v1.0.3 - admin dashboard, auto create session
+          </div>
+        )}
       </body>
     </html>
   );

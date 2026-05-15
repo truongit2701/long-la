@@ -5,6 +5,8 @@ export type UserDocument = {
   username: string;
   passwordHash: string;
   role: "admin" | "user";
+  automate_create_session?: boolean;
+  automate_days?: string[];
   createdAt: Date;
   updatedAt: Date;
 };
@@ -21,6 +23,8 @@ export function serializeUser(user: WithId<UserDocument>) {
     id: user._id.toString(),
     username: user.username,
     role: user.role ?? "user",
+    automate_create_session: user.automate_create_session ?? false,
+    automate_days: user.automate_days ?? [],
   };
 }
 

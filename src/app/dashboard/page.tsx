@@ -3,6 +3,9 @@ import { Activity } from "lucide-react";
 import { BadmintonManager } from "@/components/badminton-manager";
 import { LogoutButton } from "@/components/logout-button";
 import { getSession } from "@/lib/auth";
+import { AutomationSettings } from "@/components/automation-settings";
+import { usersCollection } from "@/lib/users";
+import { ObjectId } from "mongodb";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -10,6 +13,14 @@ export default async function DashboardPage() {
   if (!session) {
     redirect("/login");
   }
+
+  const users = await usersCollection();
+  const user = await users.findOne({ _id: new ObjectId(session.sub) });
+  
+  const initialSettings = {
+    automate_create_session: user?.automate_create_session ?? false,
+    automate_days: user?.automate_days ?? [],
+  };
 
   return (
     <main className="sport-page">
@@ -30,6 +41,7 @@ export default async function DashboardPage() {
           </div>
           <LogoutButton />
         </div>
+        <AutomationSettings initialSettings={initialSettings} />
         <BadmintonManager />
       </section>
     </main>
