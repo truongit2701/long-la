@@ -7,6 +7,18 @@ type User = {
   id: string;
   username: string;
   role: string;
+  automate_create_session: boolean;
+  automate_days: string[];
+};
+
+const dayMap: Record<string, string> = {
+  Monday: "T2",
+  Tuesday: "T3",
+  Wednesday: "T4",
+  Thursday: "T5",
+  Friday: "T6",
+  Saturday: "T7",
+  Sunday: "CN",
 };
 
 export function AdminUserList({ initialUsers, currentUserId }: { initialUsers: User[]; currentUserId: string }) {
@@ -49,7 +61,9 @@ export function AdminUserList({ initialUsers, currentUserId }: { initialUsers: U
             <tr>
               <th className="px-4 py-3 rounded-tl-md">ID</th>
               <th className="px-4 py-3">Username</th>
-              <th className="px-4 py-3 rounded-tr-md">Role</th>
+              <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">Tự động</th>
+              <th className="px-4 py-3 rounded-tr-md">Lịch (Thứ)</th>
             </tr>
           </thead>
           <tbody>
@@ -69,6 +83,24 @@ export function AdminUserList({ initialUsers, currentUserId }: { initialUsers: U
                     <option value="user">user</option>
                     <option value="admin">admin</option>
                   </select>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${user.automate_create_session ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {user.automate_create_session ? 'Bật' : 'Tắt'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
+                    {user.automate_days.length > 0 ? (
+                      user.automate_days.map(day => (
+                        <span key={day} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] font-medium border border-blue-100">
+                          {dayMap[day] || day}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-muted-foreground text-[10px]">-</span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

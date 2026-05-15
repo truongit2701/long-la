@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Pencil, QrCode, Save, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Pencil, QrCode, Save, X, Share2, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -75,6 +75,7 @@ export function SessionHistory() {
   const [editQrImageData, setEditQrImageData] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [copying, setCopying] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -298,6 +299,14 @@ export function SessionHistory() {
     }
   }
 
+  function copyPublicLink() {
+    if (!selectedSession) return;
+    const url = `${window.location.origin}/public/sessions/${selectedSession.id}`;
+    navigator.clipboard.writeText(url);
+    setCopying(true);
+    setTimeout(() => setCopying(false), 2000);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -383,17 +392,27 @@ export function SessionHistory() {
                 </CardDescription>
               </div>
               {selectedSession ? (
-                <Button
-                  className="gap-2"
-                  type="button"
-                  variant={isEditing ? "outline" : "default"}
-                  onClick={() =>
-                    isEditing ? setIsEditing(false) : openEditSession(selectedSession)
-                  }
-                >
-                  {isEditing ? <X className="size-4" /> : <Pencil className="size-4" />}
-                  {isEditing ? "Hủy" : "Chỉnh sửa"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    title="Chia sẻ link công khai"
+                    onClick={copyPublicLink}
+                  >
+                    {copying ? <Check className="size-4 text-green-600" /> : <Share2 className="size-4" />}
+                  </Button>
+                  <Button
+                    className="gap-2"
+                    type="button"
+                    variant={isEditing ? "outline" : "default"}
+                    onClick={() =>
+                      isEditing ? setIsEditing(false) : openEditSession(selectedSession)
+                    }
+                  >
+                    {isEditing ? <X className="size-4" /> : <Pencil className="size-4" />}
+                    {isEditing ? "Hủy" : "Chỉnh sửa"}
+                  </Button>
+                </div>
               ) : null}
             </div>
           </CardHeader>
