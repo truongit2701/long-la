@@ -7,6 +7,7 @@ import { z } from "zod";
 const settingsSchema = z.object({
   automate_create_session: z.boolean(),
   automate_days: z.array(z.string()),
+  showPlayerLevel: z.boolean().optional().default(true),
 });
 
 export async function PATCH(request: Request) {
@@ -30,6 +31,7 @@ export async function PATCH(request: Request) {
       $set: {
         automate_create_session: parsed.data.automate_create_session,
         automate_days: parsed.data.automate_days,
+        showPlayerLevel: parsed.data.showPlayerLevel,
         updatedAt: new Date(),
       },
     },

@@ -64,7 +64,7 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
-export function BadmintonManager() {
+export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?: boolean }) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<BadmintonSession[]>([]);
   const [participantQuantities, setParticipantQuantities] = useState<Record<string, number>>({});
@@ -364,21 +364,23 @@ export function BadmintonManager() {
                   <Label htmlFor="player-note">Ghi chú</Label>
                   <Input id="player-note" name="note" placeholder="Tùy chọn" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="player-level">Trình độ</Label>
-                  <select
-                    id="player-level"
-                    name="level"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    defaultValue="Trung bình"
-                  >
-                    {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
-                      <option key={level.id} value={level.id}>
-                        {level.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  {showPlayerLevel && (
+                    <div className="space-y-2">
+                      <Label htmlFor="player-level">Trình độ</Label>
+                      <select
+                        id="player-level"
+                        name="level"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        defaultValue="Trung bình"
+                      >
+                        {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
+                          <option key={level.id} value={level.id}>
+                            {level.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 <div className="flex items-center gap-2">
                   <input id="player-isFixed" name="isFixed" type="checkbox" className="size-4" />
                   <Label htmlFor="player-isFixed" className="cursor-pointer">Cố định (tự động chọn khi tạo buổi đánh)</Label>
@@ -413,17 +415,19 @@ export function BadmintonManager() {
                       <Input name="name" defaultValue={player.name} required minLength={2} />
                       <Input name="phone" defaultValue={player.phone} placeholder="Số điện thoại" />
                       <Input name="note" defaultValue={player.note} placeholder="Ghi chú" />
-                      <select
-                        name="level"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        defaultValue={player.level}
-                      >
-                        {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
-                          <option key={level.id} value={level.id}>
-                            {level.name}
-                          </option>
-                        ))}
-                      </select>
+                      {showPlayerLevel && (
+                        <select
+                          name="level"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          defaultValue={player.level}
+                        >
+                          {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
+                            <option key={level.id} value={level.id}>
+                              {level.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                       <div className="flex items-center gap-2">
                         <input id={`edit-isFixed-${player.id}`} name="isFixed" type="checkbox" defaultChecked={player.isFixed} className="size-4" />
                         <Label htmlFor={`edit-isFixed-${player.id}`} className="cursor-pointer">Thành viên cố định</Label>
@@ -450,7 +454,9 @@ export function BadmintonManager() {
                         <div>
                           <p className="font-medium">
                             {player.name}
-                            <span className="ml-2 text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20">{getLevelName(player.level)}</span>
+                            {showPlayerLevel && (
+                              <span className="ml-2 text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20">{getLevelName(player.level)}</span>
+                            )}
                             {player.isFixed && <span className="ml-2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">Cố định</span>}
                           </p>
                           {player.phone ? (
@@ -583,7 +589,12 @@ export function BadmintonManager() {
                         onChange={() => togglePlayer(player.id)}
                       />
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
-                        <span className="truncate font-medium">{player.name}</span>
+                        <span className="truncate font-medium">
+                          {player.name}
+                          {showPlayerLevel && (
+                            <span className="ml-2 text-[8px] opacity-70">({getLevelName(player.level)})</span>
+                          )}
+                        </span>
                         <select
                           className="h-9 rounded-md border border-input bg-background px-2 text-sm"
                           disabled={!participantQuantities[player.id]}

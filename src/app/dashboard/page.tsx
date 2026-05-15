@@ -20,6 +20,7 @@ export default async function DashboardPage() {
   const initialSettings = {
     automate_create_session: user?.automate_create_session ?? false,
     automate_days: user?.automate_days ?? [],
+    showPlayerLevel: user?.showPlayerLevel ?? true,
   };
 
   return (
@@ -42,7 +43,7 @@ export default async function DashboardPage() {
           <LogoutButton />
         </div>
         <AutomationSettings initialSettings={initialSettings} />
-        <BadmintonManager />
+        <BadmintonManager showPlayerLevel={initialSettings.showPlayerLevel} />
       </section>
     </main>
   );

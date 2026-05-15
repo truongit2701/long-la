@@ -7,6 +7,7 @@ export type UserDocument = {
   role: "admin" | "user";
   automate_create_session?: boolean;
   automate_days?: string[];
+  showPlayerLevel?: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -25,6 +26,7 @@ export function serializeUser(user: WithId<UserDocument>) {
     role: user.role ?? "user",
     automate_create_session: user.automate_create_session ?? false,
     automate_days: user.automate_days ?? [],
+    showPlayerLevel: user.showPlayerLevel ?? true,
   };
 }
 

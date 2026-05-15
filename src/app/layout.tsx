@@ -3,8 +3,8 @@ import { getSession } from "@/lib/auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Long La",
-  description: "a project for fun",
+  title: "Lông lá",
+  description: "a project for 🏸",
 };
 
 export default async function RootLayout({
@@ -23,7 +23,8 @@ export default async function RootLayout({
             v1.0.1 - init<br />
             v1.0.2 - codinh feature<br />
             v1.0.3 - admin dashboard, auto create session<br />
-            v1.0.4 - public share session
+            v1.0.4 - public share session<br />
+            v1.0.5 - level, other fee
           </div>
         )}
       </body>

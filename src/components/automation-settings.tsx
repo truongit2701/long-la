@@ -16,10 +16,11 @@ const DAYS_OF_WEEK = [
 ];
 
 export function AutomationSettings({ initialSettings }: { 
-  initialSettings: { automate_create_session: boolean; automate_days: string[] } 
+  initialSettings: { automate_create_session: boolean; automate_days: string[]; showPlayerLevel: boolean } 
 }) {
   const [enabled, setEnabled] = useState(initialSettings.automate_create_session);
   const [days, setDays] = useState<string[]>(initialSettings.automate_days);
+  const [showLevel, setShowLevel] = useState(initialSettings.showPlayerLevel);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -37,6 +38,7 @@ export function AutomationSettings({ initialSettings }: {
       body: JSON.stringify({
         automate_create_session: enabled,
         automate_days: days,
+        showPlayerLevel: showLevel,
       })
     });
     
@@ -58,21 +60,24 @@ export function AutomationSettings({ initialSettings }: {
           Tự động tạo lịch tuần
         </CardTitle>
         <CardDescription>
-          Hệ thống sẽ tự động tạo sẵn các buổi đánh cho cả tuần (kèm danh sách VĐV cố định) vào đầu mỗi tuần.
+          Thiết lập các tính năng tự động và hiển thị cho tài khoản của bạn.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-2">
-          <input 
-            type="checkbox" 
-            id="automate_create_session" 
-            checked={enabled} 
-            onChange={(e) => setEnabled(e.target.checked)} 
-            className="size-4"
-          />
-          <label htmlFor="automate_create_session" className="font-medium cursor-pointer">
-            Bật tự động tạo buổi đánh
-          </label>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Tự động hóa</p>
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id="automate_create_session" 
+              checked={enabled} 
+              onChange={(e) => setEnabled(e.target.checked)} 
+              className="size-4 rounded border-gray-300 text-primary focus:ring-primary/20"
+            />
+            <label htmlFor="automate_create_session" className="font-medium cursor-pointer">
+              Bật tự động tạo buổi đánh hàng tuần
+            </label>
+          </div>
         </div>
 
         {enabled && (
@@ -100,6 +105,22 @@ export function AutomationSettings({ initialSettings }: {
             {days.length === 0 && <p className="text-xs text-destructive">Vui lòng chọn ít nhất 1 ngày</p>}
           </div>
         )}
+
+        <div className="pt-4 border-t space-y-4">
+          <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Hiển thị</p>
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id="show_player_level" 
+              checked={showLevel} 
+              onChange={(e) => setShowLevel(e.target.checked)} 
+              className="size-4 rounded border-gray-300 text-primary focus:ring-primary/20"
+            />
+            <label htmlFor="show_player_level" className="font-medium cursor-pointer">
+              Hiển thị trình độ VĐV (Newbie, Trung bình...)
+            </label>
+          </div>
+        </div>
 
         <div className="flex items-center gap-4 pt-2">
           <Button onClick={handleSave} disabled={saving || (enabled && days.length === 0)} className="gap-2">

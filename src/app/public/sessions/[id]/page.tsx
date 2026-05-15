@@ -4,6 +4,7 @@ import { Activity, Calendar, MapPin, Users, CheckCircle2, Clock } from "lucide-r
 import { badmintonSessionsCollection, playersCollection, serializeBadmintonSession } from "@/lib/badminton";
 import { getLevelName } from "@/lib/badminton-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { usersCollection } from "@/lib/users";
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -30,6 +31,10 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
   if (!sessionDoc) {
     notFound();
   }
+
+  const users = await usersCollection();
+  const owner = await users.findOne({ _id: new ObjectId(sessionDoc.ownerId) });
+  const showPlayerLevel = owner?.showPlayerLevel ?? true;
 
   // To get player names correctly for serialization
   const playerItems = await playersCol.find({ ownerId: sessionDoc.ownerId }).toArray();
@@ -116,7 +121,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                     <div>
                       <div className="font-medium text-emerald-950 flex items-center gap-2">
                         {player.name}
-                        {player.level && (
+                        {showPlayerLevel && player.level && (
                           <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20 leading-none">
                             {getLevelName(player.level)}
                           </span>

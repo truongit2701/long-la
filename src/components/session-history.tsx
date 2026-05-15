@@ -70,7 +70,7 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
-export function SessionHistory() {
+export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: boolean }) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<BadmintonSession[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState("");
@@ -620,7 +620,7 @@ export function SessionHistory() {
                       <span>
                         <span className="font-medium flex items-center gap-2">
                           {player.name}
-                          {player.level && (
+                          {showPlayerLevel && player.level && (
                             <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20 leading-none">
                               {getLevelName(player.level)}
                             </span>

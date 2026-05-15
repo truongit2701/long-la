@@ -34,9 +34,10 @@ interface PlayerManagerProps {
   players: Player[];
   setPlayers: React.Dispatch<React.SetStateAction<Player[]>>;
   isLoading: boolean;
+  showPlayerLevel?: boolean;
 }
 
-export function PlayerManager({ players, setPlayers, isLoading }: PlayerManagerProps) {
+export function PlayerManager({ players, setPlayers, isLoading, showPlayerLevel = true }: PlayerManagerProps) {
   const [editingPlayerId, setEditingPlayerId] = useState("");
   const [playerError, setPlayerError] = useState("");
 
@@ -137,21 +138,23 @@ export function PlayerManager({ players, setPlayers, isLoading }: PlayerManagerP
                 <Label htmlFor="player-note" className="font-bold">Ghi chú</Label>
                 <Input id="player-note" name="note" placeholder="Tùy chọn" className="focus:ring-primary/20" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="player-level" className="font-bold">Trình độ</Label>
-                <select
-                  id="player-level"
-                  name="level"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-medium"
-                  defaultValue="Trung bình"
-                >
-                  {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
-                    <option key={level.id} value={level.id}>
-                      {level.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {showPlayerLevel && (
+                <div className="space-y-2">
+                  <Label htmlFor="player-level" className="font-bold">Trình độ</Label>
+                  <select
+                    id="player-level"
+                    name="level"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-medium"
+                    defaultValue="Trung bình"
+                  >
+                    {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
+                      <option key={level.id} value={level.id}>
+                        {level.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex items-center gap-3 p-2 bg-muted/30 rounded-lg border">
                 <input id="player-isFixed" name="isFixed" type="checkbox" className="size-5 rounded border-gray-300 text-primary focus:ring-primary/20" />
                 <Label htmlFor="player-isFixed" className="cursor-pointer text-xs font-bold text-muted-foreground leading-tight">Cố định (tự động chọn khi tạo buổi mới)</Label>
@@ -202,20 +205,22 @@ export function PlayerManager({ players, setPlayers, isLoading }: PlayerManagerP
                       <Label className="text-[10px] font-black uppercase text-muted-foreground">Ghi chú</Label>
                       <Input name="note" defaultValue={player.note} placeholder="Ghi chú" className="h-9 focus:ring-primary/20" />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground">Trình độ</Label>
-                      <select
-                        name="level"
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
-                        defaultValue={player.level}
-                      >
-                        {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
-                          <option key={level.id} value={level.id}>
-                            {level.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {showPlayerLevel && (
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground">Trình độ</Label>
+                        <select
+                          name="level"
+                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          defaultValue={player.level}
+                        >
+                          {PLAYER_LEVELS.map((level: { id: string; name: string }) => (
+                            <option key={level.id} value={level.id}>
+                              {level.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 py-1">
                       <input id={`edit-isFixed-${player.id}`} name="isFixed" type="checkbox" defaultChecked={player.isFixed} className="size-4 rounded text-primary focus:ring-primary/20" />
                       <Label htmlFor={`edit-isFixed-${player.id}`} className="cursor-pointer text-[10px] font-bold text-muted-foreground uppercase">Thành viên cố định</Label>
@@ -242,9 +247,11 @@ export function PlayerManager({ players, setPlayers, isLoading }: PlayerManagerP
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-black text-emerald-950 truncate">{player.name}</p>
-                          <span className="text-[10px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-full border border-blue-500/20 font-black uppercase tracking-tight">
-                            {getLevelName(player.level)}
-                          </span>
+                          {showPlayerLevel && (
+                            <span className="text-[10px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-full border border-blue-500/20 font-black uppercase tracking-tight">
+                              {getLevelName(player.level)}
+                            </span>
+                          )}
                           {player.isFixed && (
                             <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20 font-black uppercase tracking-tight">
                               Cố định
