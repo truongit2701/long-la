@@ -33,6 +33,8 @@ export type BadmintonSessionDocument = {
     paid: boolean;
     paidAt?: Date;
   }>;
+  otherFee: number;
+  otherFeeNote?: string;
   qrImageData?: string;
   note?: string;
   createdAt: Date;
@@ -74,7 +76,8 @@ export function serializeBadmintonSession(
   const courtHours = session.courtHours ?? 1;
   const courtPrice = session.courtPrice ?? courtHourlyPrice * courtHours;
   const shuttlecockTotal = session.shuttlecockCount * session.shuttlecockPrice;
-  const totalCost = courtPrice + shuttlecockTotal;
+  const otherFee = session.otherFee ?? 0;
+  const totalCost = courtPrice + shuttlecockTotal + otherFee;
   const participants =
     session.participants ??
     session.playerIds.map((id) => ({
@@ -114,6 +117,8 @@ export function serializeBadmintonSession(
     paidCount: participants.filter(
       (participant) => paymentsByParticipantId[participant.participantId]?.paid,
     ).length,
+    otherFee,
+    otherFeeNote: session.otherFeeNote ?? "",
     qrImageData: session.qrImageData ?? "",
     note: session.note ?? "",
     createdAt: session.createdAt.toISOString(),

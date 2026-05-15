@@ -48,6 +48,8 @@ type BadmintonSession = {
   paidCount: number;
   qrImageData: string;
   players: SessionPlayer[];
+  otherFee: number;
+  otherFeeNote: string;
   note: string;
 };
 
@@ -219,6 +221,8 @@ export function SessionHistory() {
           playerId,
           quantity,
         })),
+        otherFee: Number(formData.get("otherFee") ?? 0),
+        otherFeeNote: String(formData.get("otherFeeNote") ?? ""),
         qrImageData: editQrImageData,
         note: String(formData.get("note") ?? ""),
       }),
@@ -448,8 +452,16 @@ export function SessionHistory() {
                     <Label htmlFor="edit-shuttlecockPrice">Giá mỗi quả cầu</Label>
                     <Input id="edit-shuttlecockPrice" name="shuttlecockPrice" type="number" min={0} defaultValue={selectedSession.shuttlecockPrice} required />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-otherFee">Phí khác</Label>
+                    <Input id="edit-otherFee" name="otherFee" type="number" min={0} defaultValue={selectedSession.otherFee} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-otherFeeNote">Ghi chú phí khác</Label>
+                    <Input id="edit-otherFeeNote" name="otherFeeNote" defaultValue={selectedSession.otherFeeNote} />
+                  </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="edit-note">Ghi chú</Label>
+                    <Label htmlFor="edit-note">Ghi chú buổi đánh</Label>
                     <Input id="edit-note" name="note" defaultValue={selectedSession.note} />
                   </div>
                 </div>
@@ -550,6 +562,14 @@ export function SessionHistory() {
                       {formatMoney(selectedSession.shuttlecockTotal)}
                     </span>
                   </div>
+                  {selectedSession.otherFee > 0 && (
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">Phí khác ({selectedSession.otherFeeNote})</span>
+                      <span className="font-medium">
+                        {formatMoney(selectedSession.otherFee)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between gap-3 border-t pt-2">
                     <span className="font-medium">Tổng</span>
                     <span className="font-semibold">{formatMoney(selectedSession.totalCost)}</span>

@@ -29,6 +29,8 @@ const createBadmintonSessionSchema = z.object({
     .max(2_500_000, "Ảnh QR quá lớn, chọn ảnh dưới khoảng 2MB")
     .optional()
     .default(""),
+  otherFee: z.coerce.number().min(0).optional().default(0),
+  otherFeeNote: z.string().max(200).optional().default(""),
   note: z.string().max(500).optional().default(""),
 });
 
@@ -138,6 +140,8 @@ export async function POST(request: Request) {
       playerId: participant.playerId,
       paid: false,
     })),
+    otherFee: parsed.data.otherFee,
+    otherFeeNote: parsed.data.otherFeeNote.trim(),
     qrImageData,
     note: parsed.data.note.trim(),
     createdAt: now,

@@ -219,6 +219,8 @@ export function BadmintonManager() {
         courtHours: Number(formData.get("courtHours") ?? 0),
         shuttlecockCount: Number(formData.get("shuttlecockCount") ?? 0),
         shuttlecockPrice: Number(formData.get("shuttlecockPrice") ?? 0),
+        otherFee: Number(formData.get("otherFee") ?? 0),
+        otherFeeNote: String(formData.get("otherFeeNote") ?? ""),
         participants: Object.entries(participantQuantities).map(([playerId, quantity]) => ({
           playerId,
           quantity,
@@ -525,6 +527,19 @@ export function BadmintonManager() {
                 <div className="space-y-2">
                   <Label htmlFor="session-note">Ghi chú</Label>
                   <Input id="session-note" name="note" placeholder="Tùy chọn" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:col-span-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="otherFee" className="font-bold">Phí khác (Nước uống, gửi xe...)</Label>
+                    <div className="relative">
+                      <Input id="otherFee" name="otherFee" type="number" min={0} placeholder="0" className="pr-10" />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">VND</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="otherFeeNote" className="font-bold">Ghi chú phí khác</Label>
+                    <Input id="otherFeeNote" name="otherFeeNote" placeholder="Ví dụ: 10 chai nước suối" />
+                  </div>
                 </div>
               </div>
 

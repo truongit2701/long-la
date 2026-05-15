@@ -78,6 +78,9 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
               <div className="text-xs space-y-1 text-muted-foreground">
                 <p>Sân: {formatMoney(session.courtPrice)} ({session.courtHours}h)</p>
                 <p>Cầu: {formatMoney(session.shuttlecockTotal)} ({session.shuttlecockCount} quả)</p>
+                {session.otherFee > 0 && (
+                  <p>Phí khác: {formatMoney(session.otherFee)} ({session.otherFeeNote || "Không có ghi chú"})</p>
+                )}
               </div>
             </CardContent>
           </Card>
