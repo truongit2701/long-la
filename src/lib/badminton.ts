@@ -6,6 +6,7 @@ export type PlayerDocument = {
   name: string;
   phone?: string;
   note?: string;
+  isFixed?: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -57,6 +58,7 @@ export function serializePlayer(player: WithId<PlayerDocument>) {
     name: player.name,
     phone: player.phone ?? "",
     note: player.note ?? "",
+    isFixed: player.isFixed ?? false,
     createdAt: player.createdAt.toISOString(),
   };
 }

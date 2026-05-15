@@ -26,24 +26,25 @@ export async function POST(request: Request) {
   }
 
   const now = new Date();
-  const result = await users.insertOne({
-    username: parsed.data.username,
+  const document = {
+    username: parsed.data.username.trim(),
     passwordHash: await hash(parsed.data.password, 12),
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  const user = {
-    _id: result.insertedId,
-    username: parsed.data.username,
-    passwordHash: "",
+    role: "user" as const,
     createdAt: now,
     updatedAt: now,
   };
+  const result = await users.insertOne(document);
+
+  const user = {
+    _id: result.insertedId,
+    ...document,
+    passwordHash: "",
+  };
   const publicUser = serializeUser(user);
   const token = await signSession({
-    sub: publicUser.id,
-    username: publicUser.username,
+    sub: result.insertedId.toString(),
+    username: document.username,
+    role: document.role,
   });
 
   await setSessionCookie(token);

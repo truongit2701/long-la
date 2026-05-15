@@ -44,8 +44,8 @@ export async function GET() {
     playersCollection(),
   ]);
   const [items, playerItems] = await Promise.all([
-    sessions.find().sort({ playedAt: -1, createdAt: -1 }).toArray(),
-    players.find().toArray(),
+    sessions.find({ ownerId: session.sub }).sort({ playedAt: -1, createdAt: -1 }).toArray(),
+    players.find({ ownerId: session.sub }).toArray(),
   ]);
   const playerNames = Object.fromEntries(
     playerItems.map((player) => [player._id.toString(), player.name]),
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
   const players = await playersCollection();
   const existingPlayers = await players
-    .find({ _id: { $in: validPlayerObjectIds } })
+    .find({ ownerId: session.sub, _id: { $in: validPlayerObjectIds } })
     .toArray();
 
   if (existingPlayers.length !== selectedPlayerIds.length) {

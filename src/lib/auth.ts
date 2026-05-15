@@ -7,6 +7,7 @@ const encoder = new TextEncoder();
 export type SessionPayload = JWTPayload & {
   sub: string;
   username: string;
+  role: "admin" | "user";
 };
 
 function getJwtSecret() {

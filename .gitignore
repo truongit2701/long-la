@@ -1,9 +1,7 @@
 node_modules
 .next
 out
-.env
-.env.development
-.env*.local
+.env*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

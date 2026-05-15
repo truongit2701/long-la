@@ -29,6 +29,7 @@ export async function POST(request: Request) {
   const token = await signSession({
     sub: publicUser.id,
     username: publicUser.username,
+    role: publicUser.role,
   });
 
   await setSessionCookie(token);

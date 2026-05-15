@@ -31,6 +31,7 @@ type Player = {
   name: string;
   phone: string;
   note: string;
+  isFixed?: boolean;
 };
 
 type BadmintonSession = {
@@ -82,8 +83,15 @@ export function BadmintonManager() {
         sessionsResponse.json(),
       ]);
 
-      setPlayers(playersData.players ?? []);
+      const loadedPlayers = playersData.players ?? [];
+      setPlayers(loadedPlayers);
       setSessions(sessionsData.sessions ?? []);
+      
+      const defaultQuantities: Record<string, number> = {};
+      loadedPlayers.forEach((p: Player) => {
+        if (p.isFixed) defaultQuantities[p.id] = 1;
+      });
+      setParticipantQuantities(defaultQuantities);
       setIsLoading(false);
     }
 
@@ -120,6 +128,7 @@ export function BadmintonManager() {
         name: String(formData.get("name") ?? ""),
         phone: String(formData.get("phone") ?? ""),
         note: String(formData.get("note") ?? ""),
+        isFixed: formData.get("isFixed") === "on",
       }),
     });
     const data = await response.json().catch(() => null);
@@ -130,6 +139,9 @@ export function BadmintonManager() {
     }
 
     setPlayers((current) => [data.player, ...current]);
+    if (data.player.isFixed) {
+      setParticipantQuantities((current) => ({ ...current, [data.player.id]: 1 }));
+    }
     form.reset();
   }
 
@@ -144,6 +156,7 @@ export function BadmintonManager() {
         name: String(formData.get("name") ?? ""),
         phone: String(formData.get("phone") ?? ""),
         note: String(formData.get("note") ?? ""),
+        isFixed: formData.get("isFixed") === "on",
       }),
     });
     const data = await response.json().catch(() => null);
@@ -156,6 +169,12 @@ export function BadmintonManager() {
     setPlayers((current) =>
       current.map((player) => (player.id === playerId ? data.player : player)),
     );
+    setParticipantQuantities((current) => {
+      if (data.player.isFixed && !current[data.player.id]) {
+         return { ...current, [data.player.id]: 1 };
+      }
+      return current;
+    });
     setEditingPlayerId("");
   }
 
@@ -212,7 +231,9 @@ export function BadmintonManager() {
     }
 
     setSessions((current) => [data.session, ...current]);
-    setParticipantQuantities({});
+    const defaultQuantities: Record<string, number> = {};
+    players.forEach(p => { if (p.isFixed) defaultQuantities[p.id] = 1 });
+    setParticipantQuantities(defaultQuantities);
     setQrImageData("");
     form.reset();
   }
@@ -337,6 +358,10 @@ export function BadmintonManager() {
                   <Label htmlFor="player-note">Ghi chú</Label>
                   <Input id="player-note" name="note" placeholder="Tùy chọn" />
                 </div>
+                <div className="flex items-center gap-2">
+                  <input id="player-isFixed" name="isFixed" type="checkbox" className="size-4" />
+                  <Label htmlFor="player-isFixed" className="cursor-pointer">Cố định (tự động chọn khi tạo buổi đánh)</Label>
+                </div>
                 {playerError ? <p className="text-sm text-destructive">{playerError}</p> : null}
                 <Button className="w-full gap-2" type="submit">
                   <Plus className="size-4" />
@@ -367,6 +392,10 @@ export function BadmintonManager() {
                       <Input name="name" defaultValue={player.name} required minLength={2} />
                       <Input name="phone" defaultValue={player.phone} placeholder="Số điện thoại" />
                       <Input name="note" defaultValue={player.note} placeholder="Ghi chú" />
+                      <div className="flex items-center gap-2">
+                        <input id={`edit-isFixed-${player.id}`} name="isFixed" type="checkbox" defaultChecked={player.isFixed} className="size-4" />
+                        <Label htmlFor={`edit-isFixed-${player.id}`} className="cursor-pointer">Thành viên cố định</Label>
+                      </div>
                       <div className="flex gap-2">
                         <Button className="h-9 gap-2" type="submit">
                           <Save className="size-4" />
@@ -387,7 +416,10 @@ export function BadmintonManager() {
                     <div key={player.id} className="rounded-md border border-primary/15 bg-white/75 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium">{player.name}</p>
+                          <p className="font-medium">
+                            {player.name}
+                            {player.isFixed && <span className="ml-2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">Cố định</span>}
+                          </p>
                           {player.phone ? (
                             <p className="text-sm text-muted-foreground">{player.phone}</p>
                           ) : null}

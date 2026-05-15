@@ -4,6 +4,7 @@ import { getDb } from "@/lib/mongodb";
 export type UserDocument = {
   username: string;
   passwordHash: string;
+  role: "admin" | "user";
   createdAt: Date;
   updatedAt: Date;
 };
@@ -19,6 +20,7 @@ export function serializeUser(user: WithId<UserDocument>) {
   return {
     id: user._id.toString(),
     username: user.username,
+    role: user.role ?? "user",
   };
 }
 

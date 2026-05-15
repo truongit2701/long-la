@@ -38,6 +38,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const sessions = await badmintonSessionsCollection();
   const existingSession = await sessions.findOne({
     _id: new ObjectId(id),
+    ownerId: session.sub,
   });
 
   if (!existingSession) {
@@ -68,7 +69,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   if (paymentExists) {
     await sessions.updateOne(
-      { _id: existingSession._id, },
+      { _id: existingSession._id, ownerId: session.sub },
       {
         $set: {
           "payments.$[payment].paid": parsed.data.paid,

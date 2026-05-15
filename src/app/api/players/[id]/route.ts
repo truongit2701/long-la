@@ -8,6 +8,7 @@ const playerSchema = z.object({
   name: z.string().min(2, "Tên vận động viên cần ít nhất 2 ký tự").max(80),
   phone: z.string().max(30).optional().default(""),
   note: z.string().max(300).optional().default(""),
+  isFixed: z.boolean().optional().default(false),
 });
 
 type RouteContext = {
@@ -42,12 +43,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   const players = await playersCollection();
   const now = new Date();
   const result = await players.findOneAndUpdate(
-    { _id: new ObjectId(id) },
+    { _id: new ObjectId(id), ownerId: session.sub },
     {
       $set: {
         name: parsed.data.name.trim(),
         phone: parsed.data.phone.trim(),
         note: parsed.data.note.trim(),
+        isFixed: parsed.data.isFixed,
         updatedAt: now,
       },
     },
