@@ -14,12 +14,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { getLevelName } from "@/lib/badminton-types";
 
 type Player = {
   id: string;
   name: string;
   phone: string;
   note: string;
+  level: string;
 };
 
 type SessionPlayer = {
@@ -117,6 +119,7 @@ export function SessionHistory() {
         {
           playerId: string;
           name: string;
+          level: string;
           participantIds: string[];
           quantity: number;
           paidCount: number;
@@ -126,6 +129,7 @@ export function SessionHistory() {
       const group = currentGroups[player.playerId] ?? {
         playerId: player.playerId,
         name: playersById[player.playerId]?.name ?? player.name.replace(/\s+\d+$/, ""),
+        level: playersById[player.playerId]?.level ?? "",
         participantIds: [],
         quantity: 0,
         paidCount: 0,
@@ -594,8 +598,13 @@ export function SessionHistory() {
                       className="flex cursor-pointer items-center justify-between gap-3 rounded-md border p-3 text-sm transition-colors hover:bg-accent"
                     >
                       <span>
-                        <span className="font-medium">
+                        <span className="font-medium flex items-center gap-2">
                           {player.name}
+                          {player.level && (
+                            <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20 leading-none">
+                              {getLevelName(player.level)}
+                            </span>
+                          )}
                           {player.quantity > 1 ? ` x${player.quantity}` : ""}
                         </span>
                         <span className="block text-muted-foreground">

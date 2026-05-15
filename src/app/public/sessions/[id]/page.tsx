@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ObjectId } from "mongodb";
 import { Activity, Calendar, MapPin, Users, CheckCircle2, Clock } from "lucide-react";
 import { badmintonSessionsCollection, playersCollection, serializeBadmintonSession } from "@/lib/badminton";
+import { getLevelName } from "@/lib/badminton-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function formatMoney(value: number) {
@@ -35,8 +36,11 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
   const playerNames = Object.fromEntries(
     playerItems.map((player) => [player._id.toString(), player.name]),
   );
+  const playerLevels = Object.fromEntries(
+    playerItems.map((player) => [player._id.toString(), player.level ?? "intermediate"]),
+  );
 
-  const session = serializeBadmintonSession(sessionDoc, playerNames);
+  const session = serializeBadmintonSession(sessionDoc, playerNames, playerLevels);
 
   return (
     <main className="sport-page min-h-screen p-4 md:p-8 flex items-center justify-center">
@@ -106,7 +110,16 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                     <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                       {player.name.substring(0, 1).toUpperCase()}
                     </div>
-                    <span className="font-medium text-emerald-950">{player.name}</span>
+                    <div>
+                      <div className="font-medium text-emerald-950 flex items-center gap-2">
+                        {player.name}
+                        {player.level && (
+                          <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20 leading-none">
+                            {getLevelName(player.level)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   {player.paid ? (
                     <div className="flex items-center gap-1.5 text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-100">

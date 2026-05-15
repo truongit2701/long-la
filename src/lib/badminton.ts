@@ -9,6 +9,7 @@ export type PlayerDocument = {
   isFixed?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  level: string
 };
 
 export type BadmintonSessionDocument = {
@@ -58,6 +59,7 @@ export function serializePlayer(player: WithId<PlayerDocument>) {
     name: player.name,
     phone: player.phone ?? "",
     note: player.note ?? "",
+    level: player.level ?? "intermediate",
     isFixed: player.isFixed ?? false,
     createdAt: player.createdAt.toISOString(),
   };
@@ -66,6 +68,7 @@ export function serializePlayer(player: WithId<PlayerDocument>) {
 export function serializeBadmintonSession(
   session: WithId<BadmintonSessionDocument>,
   playerNames: Record<string, string>,
+  playerLevels?: Record<string, string>,
 ) {
   const courtHourlyPrice = session.courtHourlyPrice ?? session.courtPrice ?? 0;
   const courtHours = session.courtHours ?? 1;
@@ -104,6 +107,7 @@ export function serializeBadmintonSession(
       id: participant.participantId,
       playerId: participant.playerId,
       name: participant.displayName,
+      level: playerLevels?.[participant.playerId] ?? "",
       paid: paymentsByParticipantId[participant.participantId]?.paid ?? false,
       paidAt: paymentsByParticipantId[participant.participantId]?.paidAt?.toISOString() ?? "",
     })),

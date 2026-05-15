@@ -8,6 +8,7 @@ const playerSchema = z.object({
   name: z.string().min(2, "Tên vận động viên cần ít nhất 2 ký tự").max(80),
   phone: z.string().max(30).optional().default(""),
   note: z.string().max(300).optional().default(""),
+  level: z.string().optional().default("Trung bình"),
   isFixed: z.boolean().optional().default(false),
 });
 
@@ -49,6 +50,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         name: parsed.data.name.trim(),
         phone: parsed.data.phone.trim(),
         note: parsed.data.note.trim(),
+        level: parsed.data.level,
         isFixed: parsed.data.isFixed,
         updatedAt: now,
       },
