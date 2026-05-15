@@ -534,18 +534,16 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                   <Label htmlFor="session-note">Ghi chú</Label>
                   <Input id="session-note" name="note" placeholder="Tùy chọn" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:col-span-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="otherFee">Phí khác (Nước uống, gửi xe...)</Label>
-                    <div className="relative">
-                      <Input id="otherFee" name="otherFee" type="number" min={0} placeholder="0" className="pr-10" />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">VND</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="otherFeeNote">Ghi chú phí khác</Label>
-                    <Input id="otherFeeNote" name="otherFeeNote" placeholder="Ví dụ: 10 chai nước suối" />
-                  </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="otherFee">Phí khác (Nước uống, gửi xe...)</Label>
+                  <Input id="otherFee" name="otherFee" type="number" min={0} placeholder="0" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="otherFeeNote">Ghi chú phí khác</Label>
+                  <Input id="otherFeeNote" name="otherFeeNote" placeholder="Ví dụ: 10 chai nước suối" />
                 </div>
               </div>
 
