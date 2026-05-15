@@ -9,6 +9,7 @@ type User = {
   role: string;
   automate_create_session: boolean;
   automate_days: string[];
+  showPlayerLevel: boolean;
 };
 
 const dayMap: Record<string, string> = {
@@ -63,6 +64,7 @@ export function AdminUserList({ initialUsers, currentUserId }: { initialUsers: U
               <th className="px-4 py-3">Username</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Tự động</th>
+              <th className="px-4 py-3">Hiện Level</th>
               <th className="px-4 py-3 rounded-tr-md">Lịch (Thứ)</th>
             </tr>
           </thead>
@@ -87,6 +89,11 @@ export function AdminUserList({ initialUsers, currentUserId }: { initialUsers: U
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${user.automate_create_session ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                     {user.automate_create_session ? 'Bật' : 'Tắt'}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${user.showPlayerLevel ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {user.showPlayerLevel ? 'Bật' : 'Tắt'}
                   </span>
                 </td>
                 <td className="px-4 py-3">

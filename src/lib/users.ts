@@ -26,7 +26,7 @@ export function serializeUser(user: WithId<UserDocument>) {
     role: user.role ?? "user",
     automate_create_session: user.automate_create_session ?? false,
     automate_days: user.automate_days ?? [],
-    showPlayerLevel: user.showPlayerLevel ?? true,
+    showPlayerLevel: user.showPlayerLevel ?? false,
   };
 }
 
