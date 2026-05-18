@@ -882,11 +882,11 @@ export function SessionHistory({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       alt="QR nhận tiền"
-                      className="mx-auto aspect-square max-h-72 rounded-md object-contain"
+                      className="mx-auto aspect-square max-h-36 rounded-md object-contain"
                       src={selectedSession.qrImageData}
                     />
                   ) : (
-                    <div className="flex aspect-square max-h-72 items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
+                    <div className="flex aspect-square max-h-36 items-center justify-center rounded-md bg-muted text-sm text-muted-foreground">
                       Chưa thêm QR
                     </div>
                   )}

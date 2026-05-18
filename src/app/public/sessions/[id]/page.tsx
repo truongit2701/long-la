@@ -103,6 +103,26 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
           </Card>
         </div>
 
+        {session.qrImageData && (
+          <Card className="court-panel">
+            <CardHeader>
+              <CardTitle className="text-lg text-center">Quét mã chuyển khoản</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-4">
+              <div className="relative group p-2 bg-white rounded-xl border-2 border-dashed border-primary/20">
+                <img 
+                  src={session.qrImageData} 
+                  alt="QR Thanh toán" 
+                  className="max-w-[280px] w-full rounded-lg shadow-sm"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground text-center max-w-[300px]">
+                Vui lòng ghi nội dung chuyển khoản rõ ràng kèm tên của bạn để chủ sân dễ đối soát.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="court-panel overflow-hidden">
           <CardHeader className="bg-muted/30 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -145,26 +165,6 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
             </div>
           </CardContent>
         </Card>
-
-        {session.qrImageData && (
-          <Card className="court-panel">
-            <CardHeader>
-              <CardTitle className="text-lg text-center">Quét mã chuyển khoản</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
-              <div className="relative group p-2 bg-white rounded-xl border-2 border-dashed border-primary/20">
-                <img 
-                  src={session.qrImageData} 
-                  alt="QR Thanh toán" 
-                  className="max-w-[280px] w-full rounded-lg shadow-sm"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground text-center max-w-[300px]">
-                Vui lòng ghi nội dung chuyển khoản rõ ràng kèm tên của bạn để chủ sân dễ đối soát.
-              </p>
-            </CardContent>
-          </Card>
-        )}
 
         {session.note && (
           <div className="text-center italic text-sm text-muted-foreground">
