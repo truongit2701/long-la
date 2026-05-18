@@ -9,7 +9,9 @@ export type PlayerDocument = {
   isFixed?: boolean;
   createdAt: Date;
   updatedAt: Date;
-  level: string
+  level: string;
+  isDeleted?: boolean;
+  deletedAt?: Date;
 };
 
 export type BadmintonSessionDocument = {

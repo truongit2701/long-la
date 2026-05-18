@@ -20,7 +20,7 @@ export async function GET() {
 
   const players = await playersCollection();
   const items = await players
-    .find({ ownerId: session.sub })
+    .find({ ownerId: session.sub, isDeleted: { $ne: true } })
     .sort({ createdAt: -1 })
     .toArray();
 

@@ -114,6 +114,27 @@ export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: b
     [players],
   );
 
+  const selectablePlayers = useMemo(() => {
+    if (!selectedSession) return players;
+    const activeIds = new Set(players.map((p) => p.id));
+    const list = [...players];
+
+    selectedSession.players.forEach((sp) => {
+      if (!activeIds.has(sp.playerId)) {
+        list.push({
+          id: sp.playerId,
+          name: sp.name.replace(/\s+\d+$/, "") + " (Đã xóa)",
+          phone: "",
+          note: "",
+          level: "",
+        });
+        activeIds.add(sp.playerId);
+      }
+    });
+
+    return list;
+  }, [players, selectedSession]);
+
   function getGroupedPlayers(session: BadmintonSession) {
     const groups = session.players.reduce<
       Record<
@@ -484,7 +505,7 @@ export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: b
                     </span>
                   </div>
                   <div className="grid gap-2">
-                    {players.map((player) => (
+                    {selectablePlayers.map((player) => (
                       <label
                         key={player.id}
                         className="flex cursor-pointer items-center gap-3 rounded-md border border-primary/15 bg-white/80 p-3 text-sm transition-colors hover:bg-accent"

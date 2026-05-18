@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       continue;
     }
 
-    const allOwnerPlayers = await players.find({ ownerId }).toArray();
+    const allOwnerPlayers = await players.find({ ownerId, isDeleted: { $ne: true } }).toArray();
     const fixedPlayerIds = allOwnerPlayers.filter(p => p.isFixed).map(p => p._id.toString());
     
     for (const day of automateDays) {

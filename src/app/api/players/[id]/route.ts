@@ -79,12 +79,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   const players = await playersCollection();
-  const result = await players.deleteOne({
-    _id: new ObjectId(id),
-    ownerId: session.sub,
-  });
+  const result = await players.updateOne(
+    { _id: new ObjectId(id), ownerId: session.sub },
+    { $set: { isDeleted: true, updatedAt: new Date() } }
+  );
 
-  if (result.deletedCount === 0) {
+  if (result.matchedCount === 0) {
     return NextResponse.json({ message: "Không tìm thấy vận động viên" }, { status: 404 });
   }
 

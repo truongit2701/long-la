@@ -515,7 +515,7 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                   <Input id="courtName" name="courtName" placeholder="Sân 123" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="courtHourlyPrice">Giá sân / giờ</Label>
+                  <Label htmlFor="courtHourlyPrice">Giá sân</Label>
                   <Input id="courtHourlyPrice" name="courtHourlyPrice" type="number" min={0} placeholder="90000" required />
                 </div>
                 <div className="space-y-2">
@@ -523,12 +523,12 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                   <Input id="courtHours" name="courtHours" type="number" min={0.5} step={0.5} placeholder="2" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="shuttlecockCount">Số cầu</Label>
-                  <Input id="shuttlecockCount" name="shuttlecockCount" type="number" min={0} placeholder="3" required />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="shuttlecockPrice">Giá mỗi quả cầu</Label>
                   <Input id="shuttlecockPrice" name="shuttlecockPrice" type="number" min={0} placeholder="25000" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shuttlecockCount">Số cầu</Label>
+                  <Input id="shuttlecockCount" name="shuttlecockCount" type="number" min={0} placeholder="3" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="session-note">Ghi chú</Label>
