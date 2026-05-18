@@ -28,7 +28,9 @@ export type BadmintonSessionDocument = {
     participantId: string;
     playerId: string;
     displayName: string;
+    sets?: boolean[];
   }>;
+  setCount?: number;
   payments?: Array<{
     playerId?: string;
     participantId?: string;
@@ -86,6 +88,7 @@ export function serializeBadmintonSession(
       participantId: id,
       playerId: id,
       displayName: playerNames[id] ?? "vận động viên đã xóa",
+      sets: [] as boolean[],
     }));
   const playerCount = participants.length;
   const paymentsByParticipantId = Object.fromEntries(
@@ -108,6 +111,7 @@ export function serializeBadmintonSession(
     totalCost,
     playerCount,
     costPerPlayer: playerCount > 0 ? Math.ceil(totalCost / playerCount) : 0,
+    setCount: session.setCount ?? 0,
     players: participants.map((participant) => ({
       id: participant.participantId,
       playerId: participant.playerId,
@@ -115,6 +119,7 @@ export function serializeBadmintonSession(
       level: playerLevels?.[participant.playerId] ?? "",
       paid: paymentsByParticipantId[participant.participantId]?.paid ?? false,
       paidAt: paymentsByParticipantId[participant.participantId]?.paidAt?.toISOString() ?? "",
+      sets: participant.sets ?? [],
     })),
     paidCount: participants.filter(
       (participant) => paymentsByParticipantId[participant.participantId]?.paid,

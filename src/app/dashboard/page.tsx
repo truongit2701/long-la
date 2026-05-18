@@ -21,6 +21,7 @@ export default async function DashboardPage() {
     automate_create_session: user?.automate_create_session ?? false,
     automate_days: user?.automate_days ?? [],
     showPlayerLevel: user?.showPlayerLevel ?? true,
+    showPlayerSets: user?.showPlayerSets ?? false,
   };
 
   return (

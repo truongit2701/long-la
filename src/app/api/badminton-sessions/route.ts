@@ -52,9 +52,12 @@ export async function GET() {
   const playerNames = Object.fromEntries(
     playerItems.map((player) => [player._id.toString(), player.name]),
   );
+  const playerLevels = Object.fromEntries(
+    playerItems.map((player) => [player._id.toString(), player.level ?? ""]),
+  );
 
   return NextResponse.json({
-    sessions: items.map((item) => serializeBadmintonSession(item, playerNames)),
+    sessions: items.map((item) => serializeBadmintonSession(item, playerNames, playerLevels)),
   });
 }
 
@@ -120,10 +123,14 @@ export async function POST(request: Request) {
       playerId: participant.playerId,
       displayName:
         participant.quantity > 1 ? `${playerName} ${index + 1}` : playerName,
+      sets: [false, false, false, false],
     }));
   });
   const playerIds = participants.map((participant) => participant.playerId);
   const courtPrice = parsed.data.courtHourlyPrice * parsed.data.courtHours;
+  const playerLevels = Object.fromEntries(
+    existingPlayers.map((player) => [player._id.toString(), player.level ?? ""]),
+  );
   const document = {
     ownerId: session.sub,
     playedAt: parsed.data.playedAt,
@@ -144,6 +151,7 @@ export async function POST(request: Request) {
     otherFeeNote: parsed.data.otherFeeNote.trim(),
     qrImageData,
     note: parsed.data.note.trim(),
+    setCount: 4,
     createdAt: now,
     updatedAt: now,
   };
@@ -157,6 +165,7 @@ export async function POST(request: Request) {
           ...document,
         },
         playerNames,
+        playerLevels,
       ),
     },
     { status: 201 },

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Pencil, QrCode, Save, X, Share2, Check, Copy } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Pencil, QrCode, Save, X, Share2, Check, Copy, Plus, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,6 +30,8 @@ type SessionPlayer = {
   name: string;
   paid: boolean;
   paidAt: string;
+  level?: string;
+  sets?: boolean[];
 };
 
 type BadmintonSession = {
@@ -51,6 +53,7 @@ type BadmintonSession = {
   otherFee: number;
   otherFeeNote: string;
   note: string;
+  setCount?: number;
 };
 
 function formatMoney(value: number) {
@@ -70,7 +73,117 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
-export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: boolean }) {
+type SessionSetsTrackerProps = {
+  session: BadmintonSession;
+  showPlayerLevel: boolean;
+  playersById: Record<string, Player>;
+  onToggleSet: (participantId: string, setIndex: number, played: boolean) => Promise<void>;
+  onAddSet: () => Promise<void>;
+  onDeleteSet: () => Promise<void>;
+  onClose: () => void;
+};
+
+function SessionSetsTracker({
+  session,
+  showPlayerLevel,
+  playersById,
+  onToggleSet,
+  onAddSet,
+  onDeleteSet,
+  onClose,
+}: SessionSetsTrackerProps) {
+  return (
+    <div className="rounded-lg border border-primary/15 bg-white/95 p-3 shadow-sm animate-in slide-in-from-top duration-200 space-y-3 mt-2">
+      <div className="flex items-center justify-between gap-3 border-b border-primary/10 pb-2">
+        <div>
+          <p className="font-bold text-emerald-950 text-xs">Theo dõi số set cầu</p>
+          <p className="text-[10px] text-muted-foreground">Tích chọn các set đấu VĐV tham gia.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 border-primary/20 hover:bg-primary/5 text-primary text-[10px] font-bold px-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddSet();
+            }}
+          >
+            <Plus className="size-3" />
+            Thêm Set
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 border-destructive/20 hover:bg-destructive/5 text-destructive text-[10px] font-bold px-2 disabled:opacity-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteSet();
+            }}
+            disabled={(session.setCount ?? 4) <= 0}
+          >
+            <Trash className="size-3" />
+            Xóa Set
+          </Button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-primary/10 bg-white">
+        <table className="w-full border-collapse text-left text-xs">
+          <thead>
+            <tr className="border-b border-primary/10 bg-primary/[0.02]">
+              <th className="p-2 font-bold text-emerald-950">Tên</th>
+              {showPlayerLevel && <th className="p-2 font-bold text-emerald-950">Trình</th>}
+              {Array.from({ length: session.setCount ?? 4 }).map((_, index) => (
+                <th key={index} className="p-2 font-bold text-emerald-950 text-center">Set {index + 1}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {session.players.map((player) => {
+              const level = player.level ?? playersById[player.playerId]?.level ?? "";
+              return (
+                <tr key={player.id} className="border-b border-primary/5 last:border-0 hover:bg-primary/[0.01]">
+                  <td className="p-2 font-medium text-emerald-950 truncate max-w-[100px]">{player.name}</td>
+                  {showPlayerLevel && (
+                    <td className="p-2">
+                      {level && (
+                        <span className="text-[9px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20 font-bold uppercase leading-none">
+                          {getLevelName(level)}
+                        </span>
+                      )}
+                    </td>
+                  )}
+                  {Array.from({ length: session.setCount ?? 4 }).map((_, setIdx) => {
+                    const isPlayed = player.sets?.[setIdx] ?? false;
+                    return (
+                      <td key={setIdx} className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isPlayed}
+                          className="size-3.5 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary/20"
+                          onChange={(e) => onToggleSet(player.id, setIdx, e.target.checked)}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export function SessionHistory({ 
+  showPlayerLevel = true, 
+  showPlayerSets = false 
+}: { 
+  showPlayerLevel?: boolean; 
+  showPlayerSets?: boolean; 
+}) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [sessions, setSessions] = useState<BadmintonSession[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState("");
@@ -95,14 +208,14 @@ export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: b
 
       setSessions(loadedSessions);
       setPlayers(playersData?.players ?? []);
-      setSelectedSessionId(loadedSessions[0]?.id ?? "");
+      setSelectedSessionId("");
       setIsLoading(false);
     }
 
     loadData();
   }, []);
 
-  const selectedSession = sessions.find((item) => item.id === selectedSessionId) ?? sessions[0];
+  const selectedSession = sessions.find((item) => item.id === selectedSessionId);
   const selectedSessionReceived = selectedSession
     ? selectedSession.players.filter((player) => player.paid).length * selectedSession.costPerPlayer
     : 0;
@@ -336,6 +449,151 @@ export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: b
     setTimeout(() => setCopying(false), 2000);
   }
 
+  async function handleToggleSet(participantId: string, setIndex: number, played: boolean) {
+    if (!selectedSession) return;
+    setError("");
+
+    // Optimistically update frontend state
+    setSessions((curr) =>
+      curr.map((s) => {
+        if (s.id !== selectedSession.id) return s;
+        return {
+          ...s,
+          players: s.players.map((p) => {
+            if (p.id !== participantId) return p;
+            const newSets = [...(p.sets ?? [])];
+            while (newSets.length <= setIndex) {
+              newSets.push(false);
+            }
+            newSets[setIndex] = played;
+            return { ...p, sets: newSets };
+          }),
+        };
+      })
+    );
+
+    const response = await fetch(`/api/badminton-sessions/${selectedSession.id}/sets`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ participantId, setIndex, played }),
+    });
+
+    if (!response.ok) {
+      setError("Không thể cập nhật số set cầu, vui lòng thử lại.");
+      // Rollback frontend state if failed
+      setSessions((curr) =>
+        curr.map((s) => {
+          if (s.id !== selectedSession.id) return s;
+          return {
+            ...s,
+            players: s.players.map((p) => {
+              if (p.id !== participantId) return p;
+              const newSets = [...(p.sets ?? [])];
+              newSets[setIndex] = !played;
+              return { ...p, sets: newSets };
+            }),
+          };
+        })
+      );
+    }
+  }
+
+  async function handleAddSet() {
+    if (!selectedSession) return;
+    setError("");
+
+    // Optimistically update frontend state
+    setSessions((curr) =>
+      curr.map((s) => {
+        if (s.id !== selectedSession.id) return s;
+        const newSetCount = (s.setCount ?? 4) + 1;
+        return {
+          ...s,
+          setCount: newSetCount,
+          players: s.players.map((p) => {
+            const newSets = [...(p.sets ?? [])];
+            while (newSets.length < newSetCount) {
+              newSets.push(false);
+            }
+            return { ...p, sets: newSets };
+          }),
+        };
+      })
+    );
+
+    const response = await fetch(`/api/badminton-sessions/${selectedSession.id}/sets/add`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      setError("Không thể thêm set cầu mới, vui lòng thử lại.");
+      // Rollback if failed
+      setSessions((curr) =>
+        curr.map((s) => {
+          if (s.id !== selectedSession.id) return s;
+          const oldSetCount = Math.max(0, (s.setCount ?? 5) - 1);
+          return {
+            ...s,
+            setCount: oldSetCount,
+            players: s.players.map((p) => ({
+              ...p,
+              sets: (p.sets ?? []).slice(0, oldSetCount),
+            })),
+          };
+        })
+      );
+    }
+  }
+
+  async function handleDeleteSet() {
+    if (!selectedSession) return;
+    const currentSetCount = selectedSession.setCount ?? 4;
+    if (currentSetCount <= 0) return;
+    setError("");
+
+    // Optimistically update frontend state
+    setSessions((curr) =>
+      curr.map((s) => {
+        if (s.id !== selectedSession.id) return s;
+        const newSetCount = currentSetCount - 1;
+        return {
+          ...s,
+          setCount: newSetCount,
+          players: s.players.map((p) => ({
+            ...p,
+            sets: (p.sets ?? []).slice(0, newSetCount),
+          })),
+        };
+      })
+    );
+
+    const response = await fetch(`/api/badminton-sessions/${selectedSession.id}/sets/delete`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      setError("Không thể xóa set cầu, vui lòng thử lại.");
+      // Rollback if failed
+      setSessions((curr) =>
+        curr.map((s) => {
+          if (s.id !== selectedSession.id) return s;
+          const oldSetCount = currentSetCount;
+          return {
+            ...s,
+            setCount: oldSetCount,
+            players: s.players.map((p) => {
+              const newSets = [...(p.sets ?? [])];
+              while (newSets.length < oldSetCount) {
+                newSets.push(false);
+              }
+              return { ...p, sets: newSets };
+            }),
+          };
+        })
+      );
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -362,49 +620,61 @@ export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: b
               <p className="text-sm text-muted-foreground">Chưa có buổi đánh nào.</p>
             ) : null}
             {sessions.map((item) => (
-              <button
-                key={item.id}
-                className={cn(
-                  "w-full rounded-md border border-primary/15 bg-white/75 p-4 text-left transition-colors hover:bg-accent",
-                  selectedSession?.id === item.id && "border-primary bg-accent/80",
+              <div key={item.id} className="space-y-2">
+                <button
+                  className={cn(
+                    "w-full rounded-md border border-primary/15 bg-white/75 p-4 text-left transition-colors hover:bg-accent",
+                    selectedSession?.id === item.id && "border-primary bg-accent/80",
+                  )}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSessionId(selectedSessionId === item.id ? "" : item.id);
+                    setIsEditing(false);
+                  }}
+                >
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                    <div>
+                      <p className="font-semibold">
+                        {item.playedAt}
+                        {item.courtName ? ` - ${item.courtName}` : ""}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {getGroupedPlayers(item)
+                          .map((player) =>
+                            player.quantity > 1 ? `${player.name} x${player.quantity}` : player.name,
+                          )
+                          .join(", ")}
+                      </p>
+                    </div>
+                    <div className="text-left sm:text-right">
+                      <p className="font-semibold">{formatMoney(item.totalCost)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.paidCount}/{item.playerCount} đã chuyển
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
+                    <p>
+                      Sân: {formatMoney(item.courtHourlyPrice)} x {item.courtHours}h
+                    </p>
+                    <p>
+                      Cầu: {item.shuttlecockCount} x {formatMoney(item.shuttlecockPrice)}
+                    </p>
+                    <p>{formatMoney(item.costPerPlayer)} / người</p>
+                  </div>
+                </button>
+                {selectedSession?.id === item.id && showPlayerSets && (
+                  <SessionSetsTracker
+                    session={selectedSession}
+                    showPlayerLevel={showPlayerLevel}
+                    playersById={playersById}
+                    onToggleSet={handleToggleSet}
+                    onAddSet={handleAddSet}
+                    onDeleteSet={handleDeleteSet}
+                    onClose={() => setSelectedSessionId("")}
+                  />
                 )}
-                type="button"
-                onClick={() => {
-                  setSelectedSessionId(item.id);
-                  setIsEditing(false);
-                }}
-              >
-                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-                  <div>
-                    <p className="font-semibold">
-                      {item.playedAt}
-                      {item.courtName ? ` - ${item.courtName}` : ""}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {getGroupedPlayers(item)
-                        .map((player) =>
-                          player.quantity > 1 ? `${player.name} x${player.quantity}` : player.name,
-                        )
-                        .join(", ")}
-                    </p>
-                  </div>
-                  <div className="text-left sm:text-right">
-                    <p className="font-semibold">{formatMoney(item.totalCost)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.paidCount}/{item.playerCount} đã chuyển
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-                  <p>
-                    Sân: {formatMoney(item.courtHourlyPrice)} x {item.courtHours}h
-                  </p>
-                  <p>
-                    Cầu: {item.shuttlecockCount} x {formatMoney(item.shuttlecockPrice)}
-                  </p>
-                  <p>{formatMoney(item.costPerPlayer)} / người</p>
-                </div>
-              </button>
+              </div>
             ))}
           </CardContent>
         </Card>
@@ -621,6 +891,8 @@ export function SessionHistory({ showPlayerLevel = true }: { showPlayerLevel?: b
                     </div>
                   )}
                 </div>
+
+
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-3">

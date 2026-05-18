@@ -16,11 +16,12 @@ const DAYS_OF_WEEK = [
 ];
 
 export function AutomationSettings({ initialSettings }: { 
-  initialSettings: { automate_create_session: boolean; automate_days: string[]; showPlayerLevel: boolean } 
+  initialSettings: { automate_create_session: boolean; automate_days: string[]; showPlayerLevel: boolean; showPlayerSets: boolean } 
 }) {
   const [enabled, setEnabled] = useState(initialSettings.automate_create_session);
   const [days, setDays] = useState<string[]>(initialSettings.automate_days);
   const [showLevel, setShowLevel] = useState(initialSettings.showPlayerLevel);
+  const [showSets, setShowSets] = useState(initialSettings.showPlayerSets);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -39,6 +40,7 @@ export function AutomationSettings({ initialSettings }: {
         automate_create_session: enabled,
         automate_days: days,
         showPlayerLevel: showLevel,
+        showPlayerSets: showSets,
       })
     });
     
@@ -118,6 +120,18 @@ export function AutomationSettings({ initialSettings }: {
             />
             <label htmlFor="show_player_level" className="font-medium cursor-pointer">
               Hiển thị trình độ VĐV (Newbie, Trung bình...)
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input 
+              type="checkbox" 
+              id="show_player_sets" 
+              checked={showSets} 
+              onChange={(e) => setShowSets(e.target.checked)} 
+              className="size-4 rounded border-gray-300 text-primary focus:ring-primary/20"
+            />
+            <label htmlFor="show_player_sets" className="font-medium cursor-pointer">
+              Hiển thị và theo dõi số set cầu chơi trong buổi
             </label>
           </div>
         </div>

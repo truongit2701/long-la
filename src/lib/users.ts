@@ -8,6 +8,7 @@ export type UserDocument = {
   automate_create_session?: boolean;
   automate_days?: string[];
   showPlayerLevel?: boolean;
+  showPlayerSets?: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -27,6 +28,7 @@ export function serializeUser(user: WithId<UserDocument>) {
     automate_create_session: user.automate_create_session ?? false,
     automate_days: user.automate_days ?? [],
     showPlayerLevel: user.showPlayerLevel ?? false,
+    showPlayerSets: user.showPlayerSets ?? false,
   };
 }
 

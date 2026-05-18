@@ -16,6 +16,7 @@ export default async function SessionsPage() {
   const users = await usersCollection();
   const user = await users.findOne({ _id: new ObjectId(session.sub) });
   const showPlayerLevel = user?.showPlayerLevel ?? true;
+  const showPlayerSets = user?.showPlayerSets ?? false;
 
   return (
     <main className="sport-page">
@@ -36,7 +37,7 @@ export default async function SessionsPage() {
           </div>
           <LogoutButton />
         </div>
-        <SessionHistory showPlayerLevel={showPlayerLevel} />
+        <SessionHistory showPlayerLevel={showPlayerLevel} showPlayerSets={showPlayerSets} />
       </section>
     </main>
   );

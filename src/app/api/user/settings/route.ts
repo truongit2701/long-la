@@ -8,6 +8,7 @@ const settingsSchema = z.object({
   automate_create_session: z.boolean(),
   automate_days: z.array(z.string()),
   showPlayerLevel: z.boolean().optional().default(true),
+  showPlayerSets: z.boolean().optional().default(false),
 });
 
 export async function PATCH(request: Request) {
@@ -32,6 +33,7 @@ export async function PATCH(request: Request) {
         automate_create_session: parsed.data.automate_create_session,
         automate_days: parsed.data.automate_days,
         showPlayerLevel: parsed.data.showPlayerLevel,
+        showPlayerSets: parsed.data.showPlayerSets,
         updatedAt: new Date(),
       },
     },

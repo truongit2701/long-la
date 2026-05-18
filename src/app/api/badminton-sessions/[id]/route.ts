@@ -100,6 +100,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       participantId: playerId,
       playerId,
       displayName: playerNames[playerId] ?? "vận động viên",
+      sets: [] as boolean[],
     }));
   const previousPaymentsByParticipant = Object.fromEntries(
     (existingSession.payments ?? []).map((payment) => [
@@ -128,6 +129,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         playerId: participant.playerId,
         displayName:
           participant.quantity > 1 ? `${playerName} ${index + 1}` : playerName,
+        sets: previous?.sets ?? Array(existingSession.setCount ?? 4).fill(false),
       };
     });
   });
@@ -172,6 +174,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     otherFeeNote: parsed.data.otherFeeNote.trim(),
     qrImageData,
     note: parsed.data.note.trim(),
+    setCount: existingSession.setCount ?? 4,
     updatedAt: now,
   };
 
@@ -185,7 +188,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ message: "Không tìm thấy buổi chơi" }, { status: 404 });
   }
 
+  const playerLevels = Object.fromEntries(
+    existingPlayers.map((player) => [player._id.toString(), player.level ?? ""]),
+  );
+
   return NextResponse.json({
-    session: serializeBadmintonSession(result, playerNames),
+    session: serializeBadmintonSession(result, playerNames, playerLevels),
   });
 }
