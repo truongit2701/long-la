@@ -34,6 +34,7 @@ type Player = {
   note: string;
   level: string;
   isFixed?: boolean;
+  gender?: string;
 };
 
 type BadmintonSession = {
@@ -73,6 +74,7 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
   const [playerError, setPlayerError] = useState("");
   const [sessionError, setSessionError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [createSplitType, setCreateSplitType] = useState<"equal" | "by_gender">("equal");
 
   useEffect(() => {
     async function loadData() {
@@ -132,6 +134,7 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
         note: String(formData.get("note") ?? ""),
         level: String(formData.get("level") ?? "Trung bình"),
         isFixed: formData.get("isFixed") === "on",
+        gender: String(formData.get("gender") ?? ""),
       }),
     });
     const data = await response.json().catch(() => null);
@@ -161,6 +164,7 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
         note: String(formData.get("note") ?? ""),
         level: String(formData.get("level") ?? "Trung bình"),
         isFixed: formData.get("isFixed") === "on",
+        gender: String(formData.get("gender") ?? ""),
       }),
     });
     const data = await response.json().catch(() => null);
@@ -227,6 +231,9 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
         })),
         qrImageData,
         note: String(formData.get("note") ?? ""),
+        splitType: createSplitType,
+        guestMalePrice: Number(formData.get("guestMalePrice") ?? 0),
+        guestFemalePrice: Number(formData.get("guestFemalePrice") ?? 0),
       }),
     });
     const data = await response.json().catch(() => null);
@@ -241,6 +248,7 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
     players.forEach(p => { if (p.isFixed) defaultQuantities[p.id] = 1 });
     setParticipantQuantities(defaultQuantities);
     setQrImageData("");
+    setCreateSplitType("equal");
     form.reset();
   }
 
@@ -357,12 +365,21 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                   <Input id="player-name" name="name" placeholder="Nguyễn Văn A" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="player-phone">Số điện thoại</Label>
-                  <Input id="player-phone" name="phone" placeholder="Tùy chọn" />
+                  <Label htmlFor="player-gender">Giới tính</Label>
+                  <select
+                    id="player-gender"
+                    name="gender"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    required
+                    defaultValue="male"
+                  >
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                  </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="player-note">Ghi chú</Label>
-                  <Input id="player-note" name="note" placeholder="Tùy chọn" />
+                  <Label htmlFor="player-phone">Số điện thoại</Label>
+                  <Input id="player-phone" name="phone" placeholder="Tùy chọn" />
                 </div>
                   {showPlayerLevel && (
                     <div className="space-y-2">
@@ -381,6 +398,10 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                       </select>
                     </div>
                   )}
+                <div className="space-y-2">
+                  <Label htmlFor="player-note">Ghi chú</Label>
+                  <Input id="player-note" name="note" placeholder="Tùy chọn" />
+                </div>
                 <div className="flex items-center gap-2">
                   <input id="player-isFixed" name="isFixed" type="checkbox" className="size-4" />
                   <Label htmlFor="player-isFixed" className="cursor-pointer">Cố định (tự động chọn khi tạo buổi đánh)</Label>
@@ -413,6 +434,15 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                       onSubmit={(event) => updatePlayer(event, player.id)}
                     >
                       <Input name="name" defaultValue={player.name} required minLength={2} />
+                      <select
+                        name="gender"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                        defaultValue={player.gender ?? "male"}
+                      >
+                        <option value="male">Nam</option>
+                        <option value="female">Nữ</option>
+                      </select>
                       <Input name="phone" defaultValue={player.phone} placeholder="Số điện thoại" />
                       <Input name="note" defaultValue={player.note} placeholder="Ghi chú" />
                       {showPlayerLevel && (
@@ -452,12 +482,17 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                     <div key={player.id} className="rounded-md border border-primary/15 bg-white/75 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium">
+                          <p className="font-medium flex items-center gap-1.5 flex-wrap">
                             {player.name}
+                            {player.gender === "male" ? (
+                              <span className="text-[10px] bg-sky-500/10 text-sky-600 px-1.5 py-0.5 rounded border border-sky-500/20 font-bold uppercase leading-none">Nam</span>
+                            ) : player.gender === "female" ? (
+                              <span className="text-[10px] bg-pink-500/10 text-pink-600 px-1.5 py-0.5 rounded border border-pink-500/20 font-bold uppercase leading-none">Nữ</span>
+                            ) : null}
                             {showPlayerLevel && (
-                              <span className="ml-2 text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20">{getLevelName(player.level)}</span>
+                              <span className="text-[10px] bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20 leading-none">{getLevelName(player.level)}</span>
                             )}
-                            {player.isFixed && <span className="ml-2 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">Cố định</span>}
+                            {player.isFixed && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20 leading-none">Cố định</span>}
                           </p>
                           {player.phone ? (
                             <p className="text-sm text-muted-foreground">{player.phone}</p>
@@ -530,10 +565,6 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                   <Label htmlFor="shuttlecockCount">Số cầu</Label>
                   <Input id="shuttlecockCount" name="shuttlecockCount" type="number" min={0} placeholder="3" required />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="session-note">Ghi chú</Label>
-                  <Input id="session-note" name="note" placeholder="Tùy chọn" />
-                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -565,6 +596,67 @@ export function BadmintonManager({ showPlayerLevel = true }: { showPlayerLevel?:
                     <QrCode className="size-10 text-muted-foreground" />
                   )}
                 </div>
+              </div>
+
+              {/* Cài đặt chia tiền sân */}
+              <div className="space-y-4 rounded-lg border border-primary/15 bg-primary/5 p-4">
+                <p className="font-semibold text-emerald-950 text-sm">Hình thức chia tiền</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-md border bg-white p-3 text-sm transition-colors ${createSplitType === "equal" ? "border-primary bg-primary/5 text-primary font-medium" : "border-primary/10 hover:bg-accent"}`}>
+                    <input
+                      type="radio"
+                      name="createSplitTypeRadio"
+                      className="size-3.5"
+                      checked={createSplitType === "equal"}
+                      onChange={() => setCreateSplitType("equal")}
+                    />
+                    Chia đều tiền
+                  </label>
+                  <label className={`flex cursor-pointer items-center gap-2 rounded-md border bg-white p-3 text-sm transition-colors ${createSplitType === "by_gender" ? "border-primary bg-primary/5 text-primary font-medium" : "border-primary/10 hover:bg-accent"}`}>
+                    <input
+                      type="radio"
+                      name="createSplitTypeRadio"
+                      className="size-3.5"
+                      checked={createSplitType === "by_gender"}
+                      onChange={() => setCreateSplitType("by_gender")}
+                    />
+                    Chia theo nam / nữ
+                  </label>
+                </div>
+
+                {createSplitType === "by_gender" && (
+                  <div className="grid gap-4 sm:grid-cols-2 bg-white/70 p-3 rounded-md border border-primary/5 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="guestMalePrice">Tiền Nam (đ - bắt buộc)</Label>
+                      <Input
+                        id="guestMalePrice"
+                        name="guestMalePrice"
+                        type="number"
+                        min={0}
+                        placeholder="70000"
+                        defaultValue="70000"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="guestFemalePrice">Tiền Nữ (đ - bắt buộc)</Label>
+                      <Input
+                        id="guestFemalePrice"
+                        name="guestFemalePrice"
+                        type="number"
+                        min={0}
+                        placeholder="60000"
+                        defaultValue="60000"
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="session-note">Ghi chú</Label>
+                <Input id="session-note" name="note" placeholder="Tùy chọn" />
               </div>
 
               <div className="space-y-3">

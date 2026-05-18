@@ -10,6 +10,7 @@ export type PlayerDocument = {
   createdAt: Date;
   updatedAt: Date;
   level: string;
+  gender?: string;
   isDeleted?: boolean;
   deletedAt?: Date;
 };
@@ -41,6 +42,9 @@ export type BadmintonSessionDocument = {
   otherFeeNote?: string;
   qrImageData?: string;
   note?: string;
+  splitType?: string;
+  guestMalePrice?: number;
+  guestFemalePrice?: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -67,6 +71,7 @@ export function serializePlayer(player: WithId<PlayerDocument>) {
     note: player.note ?? "",
     level: player.level ?? "intermediate",
     isFixed: player.isFixed ?? false,
+    gender: player.gender ?? "",
     createdAt: player.createdAt.toISOString(),
   };
 }
@@ -75,6 +80,8 @@ export function serializeBadmintonSession(
   session: WithId<BadmintonSessionDocument>,
   playerNames: Record<string, string>,
   playerLevels?: Record<string, string>,
+  playerGenders?: Record<string, string>,
+  playerFixedStatus?: Record<string, boolean>,
 ) {
   const courtHourlyPrice = session.courtHourlyPrice ?? session.courtPrice ?? 0;
   const courtHours = session.courtHours ?? 1;
@@ -98,6 +105,25 @@ export function serializeBadmintonSession(
     ]),
   );
 
+  const splitType = session.splitType ?? "equal";
+  const malePrice = session.guestMalePrice ?? 0;
+  const femalePrice = session.guestFemalePrice ?? 0;
+
+  // Calculate dynamic costs
+  const participantCosts: Record<string, number> = {};
+  if ((splitType === "by_gender" || splitType === "host_guest") && participants.length > 0) {
+    // All players pay based on their gender — isFixed has no effect on pricing
+    participants.forEach((p) => {
+      const gender = playerGenders?.[p.playerId] ?? "male";
+      participantCosts[p.participantId] = gender === "female" ? femalePrice : malePrice;
+    });
+  } else {
+    const cost = playerCount > 0 ? Math.ceil(totalCost / playerCount) : 0;
+    participants.forEach((p) => {
+      participantCosts[p.participantId] = cost;
+    });
+  }
+
   return {
     id: session._id.toString(),
     playedAt: session.playedAt,
@@ -112,11 +138,17 @@ export function serializeBadmintonSession(
     playerCount,
     costPerPlayer: playerCount > 0 ? Math.ceil(totalCost / playerCount) : 0,
     setCount: session.setCount ?? 0,
+    splitType,
+    malePrice,
+    femalePrice,
     players: participants.map((participant) => ({
       id: participant.participantId,
       playerId: participant.playerId,
       name: participant.displayName,
       level: playerLevels?.[participant.playerId] ?? "",
+      gender: playerGenders?.[participant.playerId] ?? "male",
+      isFixed: !!playerFixedStatus?.[participant.playerId],
+      cost: participantCosts[participant.participantId] ?? 0,
       paid: paymentsByParticipantId[participant.participantId]?.paid ?? false,
       paidAt: paymentsByParticipantId[participant.participantId]?.paidAt?.toISOString() ?? "",
       sets: participant.sets ?? [],

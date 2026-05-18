@@ -44,8 +44,14 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
   const playerLevels = Object.fromEntries(
     playerItems.map((player) => [player._id.toString(), player.level ?? "intermediate"]),
   );
+  const playerGenders = Object.fromEntries(
+    playerItems.map((player) => [player._id.toString(), player.gender ?? "male"]),
+  );
+  const playerFixedStatus = Object.fromEntries(
+    playerItems.map((player) => [player._id.toString(), !!player.isFixed]),
+  );
 
-  const session = serializeBadmintonSession(sessionDoc, playerNames, playerLevels);
+  const session = serializeBadmintonSession(sessionDoc, playerNames, playerLevels, playerGenders, playerFixedStatus);
 
   return (
     <main className="sport-page min-h-screen p-4 md:p-8 flex items-center justify-center">
@@ -92,13 +98,24 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
 
           <Card className="court-panel border-orange-200 bg-orange-50/30">
             <CardHeader className="pb-2">
-              <p className="text-xs font-medium text-orange-600 uppercase tracking-wider">Mỗi người đóng</p>
+              <p className="text-xs font-medium text-orange-600 uppercase tracking-wider">
+                {(session.splitType === "by_gender" || session.splitType === "host_guest") ? "Hình thức chia tiền" : "Mỗi người đóng"}
+              </p>
               <CardTitle className="text-2xl text-orange-700 font-bold">
-                {formatMoney(session.costPerPlayer)}
+                {(session.splitType === "by_gender" || session.splitType === "host_guest")
+                  ? "Chia theo nam / nữ"
+                  : formatMoney(session.costPerPlayer)}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-orange-600/80">Chia đều cho {session.playerCount} người tham gia</p>
+              {(session.splitType === "by_gender" || session.splitType === "host_guest") ? (
+                <div className="text-xs space-y-1 text-orange-700/90 font-medium">
+                  <p>• Nam: {formatMoney(session.malePrice ?? 0)}</p>
+                  <p>• Nữ: {formatMoney(session.femalePrice ?? 0)}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-orange-600/80">Chia đều cho {session.playerCount} người tham gia</p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -146,7 +163,17 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                             {getLevelName(player.level)}
                           </span>
                         )}
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded border leading-none ${
+                          player.gender === "female"
+                            ? "bg-rose-500/10 text-rose-600 border-rose-500/20"
+                            : "bg-sky-500/10 text-sky-600 border-sky-500/20"
+                        }`}>
+                          {player.gender === "female" ? "Nữ" : "Nam"}
+                        </span>
                       </div>
+                      <span className="block text-xs text-muted-foreground mt-0.5">
+                        Cần đóng: <span className="font-semibold text-emerald-800">{formatMoney(player.cost ?? session.costPerPlayer)}</span>
+                      </span>
                     </div>
                   </div>
                   {player.paid ? (

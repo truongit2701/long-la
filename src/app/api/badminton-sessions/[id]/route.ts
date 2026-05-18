@@ -32,6 +32,9 @@ const updateBadmintonSessionSchema = z.object({
   otherFee: z.coerce.number().min(0).optional().default(0),
   otherFeeNote: z.string().max(200).optional().default(""),
   note: z.string().max(500).optional().default(""),
+  splitType: z.enum(["equal", "host_guest"]).optional().default("equal"),
+  guestMalePrice: z.coerce.number().min(0).optional().default(0),
+  guestFemalePrice: z.coerce.number().min(0).optional().default(0),
 });
 
 type RouteContext = {
@@ -174,6 +177,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     otherFeeNote: parsed.data.otherFeeNote.trim(),
     qrImageData,
     note: parsed.data.note.trim(),
+    splitType: parsed.data.splitType,
+    guestMalePrice: parsed.data.guestMalePrice,
+    guestFemalePrice: parsed.data.guestFemalePrice,
     setCount: existingSession.setCount ?? 4,
     updatedAt: now,
   };
@@ -191,8 +197,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   const playerLevels = Object.fromEntries(
     existingPlayers.map((player) => [player._id.toString(), player.level ?? ""]),
   );
+  const playerGenders = Object.fromEntries(
+    existingPlayers.map((player) => [player._id.toString(), player.gender ?? "male"]),
+  );
+  const playerFixedStatus = Object.fromEntries(
+    existingPlayers.map((player) => [player._id.toString(), !!player.isFixed]),
+  );
 
   return NextResponse.json({
-    session: serializeBadmintonSession(result, playerNames, playerLevels),
+    session: serializeBadmintonSession(result, playerNames, playerLevels, playerGenders, playerFixedStatus),
   });
 }

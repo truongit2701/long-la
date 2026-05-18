@@ -22,6 +22,7 @@ type Player = {
   phone: string;
   note: string;
   level: string;
+  gender?: string;
 };
 
 type SessionPlayer = {
@@ -32,6 +33,9 @@ type SessionPlayer = {
   paidAt: string;
   level?: string;
   sets?: boolean[];
+  gender?: string;
+  isFixed?: boolean;
+  cost?: number;
 };
 
 type BadmintonSession = {
@@ -54,6 +58,9 @@ type BadmintonSession = {
   otherFeeNote: string;
   note: string;
   setCount?: number;
+  splitType?: string;
+  malePrice?: number;
+  femalePrice?: number;
 };
 
 function formatMoney(value: number) {
@@ -193,6 +200,7 @@ export function SessionHistory({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [copying, setCopying] = useState(false);
+  const [editSplitType, setEditSplitType] = useState<"equal" | "by_gender">("equal");
 
   useEffect(() => {
     async function loadData() {
@@ -217,7 +225,9 @@ export function SessionHistory({
 
   const selectedSession = sessions.find((item) => item.id === selectedSessionId);
   const selectedSessionReceived = selectedSession
-    ? selectedSession.players.filter((player) => player.paid).length * selectedSession.costPerPlayer
+    ? selectedSession.players
+        .filter((player) => player.paid)
+        .reduce((sum, player) => sum + (player.cost ?? selectedSession.costPerPlayer), 0)
     : 0;
   const selectedSessionMissing = selectedSession
     ? Math.max(selectedSession.totalCost - selectedSessionReceived, 0)
@@ -256,9 +266,11 @@ export function SessionHistory({
           playerId: string;
           name: string;
           level: string;
+          gender: string;
           participantIds: string[];
           quantity: number;
           paidCount: number;
+          totalCost: number;
         }
       >
     >((currentGroups, player) => {
@@ -266,13 +278,16 @@ export function SessionHistory({
         playerId: player.playerId,
         name: playersById[player.playerId]?.name ?? player.name.replace(/\s+\d+$/, ""),
         level: playersById[player.playerId]?.level ?? "",
+        gender: playersById[player.playerId]?.gender ?? player.gender ?? "male",
         participantIds: [],
         quantity: 0,
         paidCount: 0,
+        totalCost: 0,
       };
 
       group.participantIds.push(player.id);
       group.quantity += 1;
+      group.totalCost += player.cost ?? session.costPerPlayer;
       group.paidCount += player.paid ? 1 : 0;
       currentGroups[player.playerId] = group;
       return currentGroups;
@@ -291,6 +306,7 @@ export function SessionHistory({
     setIsEditing(true);
     setEditParticipantQuantities(quantities);
     setEditQrImageData(session.qrImageData);
+    setEditSplitType((session.splitType as "equal" | "by_gender") ?? "equal");
   }
 
   function updateEditParticipantQuantity(playerId: string, quantity: number) {
@@ -359,6 +375,9 @@ export function SessionHistory({
         otherFeeNote: String(formData.get("otherFeeNote") ?? ""),
         qrImageData: editQrImageData,
         note: String(formData.get("note") ?? ""),
+        splitType: editSplitType,
+        guestMalePrice: Number(formData.get("guestMalePrice") ?? 0),
+        guestFemalePrice: Number(formData.get("guestFemalePrice") ?? 0),
       }),
     });
     const data = await response.json().catch(() => null);
@@ -610,7 +629,7 @@ export function SessionHistory({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
         <Card className="court-panel">
           <CardHeader>
-            <CardTitle>Lịch sử buổi đánh</CardTitle>
+            <CardTitle>Danh sách</CardTitle>
             <CardDescription>
               {isLoading ? "Đang tải..." : "Click vào một buổi để xem chi tiết."}
             </CardDescription>
@@ -683,7 +702,7 @@ export function SessionHistory({
           <CardHeader>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <CardTitle>Chi tiết buổi chơi</CardTitle>
+                <CardTitle>Chi tiết</CardTitle>
                 <CardDescription>
                   {selectedSession
                     ? `${selectedSession.playedAt}${selectedSession.courtName ? ` - ${selectedSession.courtName}` : ""}`
@@ -755,6 +774,62 @@ export function SessionHistory({
                     <Label htmlFor="edit-note">Ghi chú buổi đánh</Label>
                     <Input id="edit-note" name="note" defaultValue={selectedSession.note} />
                   </div>
+
+                  {/* Split type selection */}
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label>Hình thức chia tiền</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className={`flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition-colors ${editSplitType === "equal" ? "border-primary bg-primary/5 text-primary font-medium" : "border-primary/15 hover:bg-accent"}`}>
+                        <input
+                          type="radio"
+                          name="splitTypeRadio"
+                          className="size-3.5"
+                          checked={editSplitType === "equal"}
+                          onChange={() => setEditSplitType("equal")}
+                        />
+                        Chia đều tiền
+                      </label>
+                      <label className={`flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition-colors ${editSplitType === "by_gender" ? "border-primary bg-primary/5 text-primary font-medium" : "border-primary/15 hover:bg-accent"}`}>
+                        <input
+                          type="radio"
+                          name="splitTypeRadio"
+                          className="size-3.5"
+                          checked={editSplitType === "by_gender"}
+                          onChange={() => setEditSplitType("by_gender")}
+                        />
+                        Chia theo nam / nữ
+                      </label>
+                    </div>
+                  </div>
+
+                  {editSplitType === "by_gender" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-guestMalePrice">Tiền Nam (đ)</Label>
+                        <Input
+                          id="edit-guestMalePrice"
+                          name="guestMalePrice"
+                          type="number"
+                          min={0}
+                          placeholder="70000"
+                          defaultValue={selectedSession.malePrice ?? 70000}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-guestFemalePrice">Tiền Nữ (đ)</Label>
+                        <Input
+                          id="edit-guestFemalePrice"
+                          name="guestFemalePrice"
+                          type="number"
+                          min={0}
+                          placeholder="60000"
+                          defaultValue={selectedSession.femalePrice ?? 60000}
+                          required
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -921,7 +996,7 @@ export function SessionHistory({
                           {player.quantity > 1 ? ` x${player.quantity}` : ""}
                         </span>
                         <span className="block text-muted-foreground">
-                          {formatMoney(selectedSession.costPerPlayer * player.quantity)}
+                          {formatMoney(player.totalCost)}
                         </span>
                       </span>
                       <span className="flex items-center gap-2">

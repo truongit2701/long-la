@@ -9,6 +9,9 @@ const createPlayerSchema = z.object({
   note: z.string().max(300).optional().default(""),
   level: z.string().optional().default("Trung bình"),
   isFixed: z.boolean().optional().default(false),
+  gender: z.enum(["male", "female"], {
+    errorMap: () => ({ message: "Vui lòng chọn giới tính (bắt buộc)" }),
+  }),
 });
 
 export async function GET() {
@@ -53,6 +56,7 @@ export async function POST(request: Request) {
     note: parsed.data.note.trim(),
     level: parsed.data.level,
     isFixed: parsed.data.isFixed,
+    gender: parsed.data.gender,
     createdAt: now,
     updatedAt: now,
   });
@@ -66,6 +70,7 @@ export async function POST(request: Request) {
         phone: parsed.data.phone.trim(),
         note: parsed.data.note.trim(),
         level: parsed.data.level,
+        gender: parsed.data.gender,
         createdAt: now,
         updatedAt: now,
       }),

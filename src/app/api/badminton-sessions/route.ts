@@ -32,6 +32,9 @@ const createBadmintonSessionSchema = z.object({
   otherFee: z.coerce.number().min(0).optional().default(0),
   otherFeeNote: z.string().max(200).optional().default(""),
   note: z.string().max(500).optional().default(""),
+  splitType: z.enum(["equal", "host_guest"]).optional().default("equal"),
+  guestMalePrice: z.coerce.number().min(0).optional().default(0),
+  guestFemalePrice: z.coerce.number().min(0).optional().default(0),
 });
 
 export async function GET() {
@@ -55,9 +58,17 @@ export async function GET() {
   const playerLevels = Object.fromEntries(
     playerItems.map((player) => [player._id.toString(), player.level ?? ""]),
   );
+  const playerGenders = Object.fromEntries(
+    playerItems.map((player) => [player._id.toString(), player.gender ?? "male"]),
+  );
+  const playerFixedStatus = Object.fromEntries(
+    playerItems.map((player) => [player._id.toString(), !!player.isFixed]),
+  );
 
   return NextResponse.json({
-    sessions: items.map((item) => serializeBadmintonSession(item, playerNames, playerLevels)),
+    sessions: items.map((item) =>
+      serializeBadmintonSession(item, playerNames, playerLevels, playerGenders, playerFixedStatus)
+    ),
   });
 }
 
@@ -131,6 +142,13 @@ export async function POST(request: Request) {
   const playerLevels = Object.fromEntries(
     existingPlayers.map((player) => [player._id.toString(), player.level ?? ""]),
   );
+  const playerGenders = Object.fromEntries(
+    existingPlayers.map((player) => [player._id.toString(), player.gender ?? "male"]),
+  );
+  const playerFixedStatus = Object.fromEntries(
+    existingPlayers.map((player) => [player._id.toString(), !!player.isFixed]),
+  );
+
   const document = {
     ownerId: session.sub,
     playedAt: parsed.data.playedAt,
@@ -151,6 +169,9 @@ export async function POST(request: Request) {
     otherFeeNote: parsed.data.otherFeeNote.trim(),
     qrImageData,
     note: parsed.data.note.trim(),
+    splitType: parsed.data.splitType,
+    guestMalePrice: parsed.data.guestMalePrice,
+    guestFemalePrice: parsed.data.guestFemalePrice,
     setCount: 4,
     createdAt: now,
     updatedAt: now,
@@ -166,6 +187,8 @@ export async function POST(request: Request) {
         },
         playerNames,
         playerLevels,
+        playerGenders,
+        playerFixedStatus,
       ),
     },
     { status: 201 },

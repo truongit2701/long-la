@@ -28,6 +28,7 @@ type Player = {
   note: string;
   level: string;
   isFixed?: boolean;
+  gender?: string;
 };
 
 interface PlayerManagerProps {
@@ -55,6 +56,7 @@ export function PlayerManager({ players, setPlayers, isLoading, showPlayerLevel 
         note: String(formData.get("note") ?? ""),
         level: String(formData.get("level") ?? "Trung bình"),
         isFixed: formData.get("isFixed") === "on",
+        gender: String(formData.get("gender") ?? ""),
       }),
     });
     const data = await response.json().catch(() => null);
@@ -81,6 +83,7 @@ export function PlayerManager({ players, setPlayers, isLoading, showPlayerLevel 
         note: String(formData.get("note") ?? ""),
         level: String(formData.get("level") ?? "Trung bình"),
         isFixed: formData.get("isFixed") === "on",
+        gender: String(formData.get("gender") ?? ""),
       }),
     });
     const data = await response.json().catch(() => null);
@@ -129,6 +132,19 @@ export function PlayerManager({ players, setPlayers, isLoading, showPlayerLevel 
               <div className="space-y-2">
                 <Label htmlFor="player-name" className="font-bold">Tên</Label>
                 <Input id="player-name" name="name" placeholder="Nguyễn Văn A" required className="focus:ring-primary/20" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="player-gender" className="font-bold">Giới tính <span className="text-destructive">*</span></Label>
+                <select
+                  id="player-gender"
+                  name="gender"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-medium"
+                  required
+                  defaultValue="male"
+                >
+                  <option value="male">Nam</option>
+                  <option value="female">Nữ</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="player-phone" className="font-bold">Số điện thoại</Label>
@@ -198,6 +214,18 @@ export function PlayerManager({ players, setPlayers, isLoading, showPlayerLevel 
                       <Input name="name" defaultValue={player.name} required minLength={2} className="h-9 focus:ring-primary/20" />
                     </div>
                     <div className="space-y-1">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground">Giới tính</Label>
+                      <select
+                        name="gender"
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        required
+                        defaultValue={player.gender ?? "male"}
+                      >
+                        <option value="male">Nam</option>
+                        <option value="female">Nữ</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground">Điện thoại</Label>
                       <Input name="phone" defaultValue={player.phone} placeholder="Số điện thoại" className="h-9 focus:ring-primary/20" />
                     </div>
@@ -247,6 +275,11 @@ export function PlayerManager({ players, setPlayers, isLoading, showPlayerLevel 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-black text-emerald-950 truncate">{player.name}</p>
+                          {player.gender === "male" ? (
+                            <span className="text-[10px] bg-sky-500/10 text-sky-600 px-2 py-0.5 rounded-full border border-sky-500/20 font-black uppercase tracking-tight">Nam</span>
+                          ) : player.gender === "female" ? (
+                            <span className="text-[10px] bg-pink-500/10 text-pink-600 px-2 py-0.5 rounded-full border border-pink-500/20 font-black uppercase tracking-tight">Nữ</span>
+                          ) : null}
                           {showPlayerLevel && (
                             <span className="text-[10px] bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-full border border-blue-500/20 font-black uppercase tracking-tight">
                               {getLevelName(player.level)}
